@@ -1,0 +1,17 @@
+Flask
+PyMongo
+python-dotenv
+pdfplumber
+numpy
+reportlab
+langchain
+langchain-huggingface
+langchain-community
+langchain-core
+chromadb
+transformers
+huggingface-hub
+gunicorn
+fpdf
+pypdf
+pdf_generator
