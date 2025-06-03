@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – {{ selected if selected else '' }}{% endblock %}
+
+{% block main_content %}
+  {% if not selected %}
+    <!-- No patient selected: show placeholder text -->
+    <div class="h-full flex items-center justify-center text-gray-400">
+      <p>Select a patient from the right panel or create a new one.</p>
+    </div>
+  {% else %}
+    <!-- TABS HEADER -->
+    <div class="flex space-x-6 border‐b border‐gray-200 pb-3 mb-4">
+      <button class="tab-btn text-gray-700 px-3 py-1 border-b-2 border-indigo-500 font-medium" data-tab="overview">Overview</button>
+      <button class="tab-btn text-gray-500 hover:text-gray-700 px-3 py-1" data-tab="caremgmt">Care Management</button>
+      <button class="tab-btn text-gray-500 hover:text-gray-700 px-3 py-1" data-tab="documents">Documents</button>
+      <button class="tab-btn text-gray-500 hover:text-gray-700 px-3 py-1" data-tab="scheduling">Scheduling</button>
+      <button class="tab-btn text-gray-500 hover:text-gray-700 px-3 py-1" data-tab="encounters">Encounters</button>
+      <div class="ml-auto">
+        <button id="customize_charts_btn" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Customize Charts</button>
+      </div>
+    </div>
+
+    <!-- TAB PANELS -->
+    <div id="overview" class="tab-panel">
+      <!-- Patient Timeline & Description Section -->
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Left: Timeline -->
+        <div class="bg-white rounded-lg shadow p-4">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-semibold text-gray-700">Patient Timeline</h3>
+            <select id="timeline_year" class="bg-white border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              {% set years = [2024] %}
+              {% set selected_year = 2024 %}
+              {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="space-y-4">
+            {% for event in timeline %}
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="h-2 w-2 mt-1 rounded-full bg-indigo-500"></div>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-semibold">{{ event.title }} <span class="text-gray-400">• {{ event.date }}</span></p>
+                <p class="text-sm text-gray-600">{{ event.desc }}</p>
+              </div>
+            </div>
+            {% endfor %}
+            <div class="text-indigo-500 text-sm hover:underline cursor-pointer">Full History</div>
+          </div>
+        </div>
+
+        <!-- Right: Patient Description -->
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold text-gray-700 mb-2">Patient Description</h3>
+          <p class="text-sm text-gray-600">
+            Patients identified with specific conditions falling under HCC may require more intensive
+            care or resources, influencing payment structures within the healthcare system.
+          </p>
+        </div>
+      </div>
+
+      <!-- Goals & Activities + Actions -->
+      <div class="grid grid-cols-2 gap-6 mt-6">
+        <!-- Goals & Activities -->
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">Goals & Activities</h3>
+          <div class="space-y-3">
+            {% for goal in goals_activities %}
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span>{{ goal.label }}</span>
+                <span>{{ goal.percent }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-indigo-500 h-2 rounded-full" style="width: {{ goal.percent }}%;"></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">Actions</h3>
+          <div class="space-y-2">
+            {% for act in actions_list %}
+            <label class="flex items-center space-x-2">
+              <input type="checkbox" class="h-4 w-4 text-indigo-500 border-gray-300 rounded" {% if act.checked %}checked{% endif %}>
+              <span class="text-sm text-gray-700">{{ act.label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Quality Measures & Documentation -->
+      <div class="bg-white rounded-lg shadow p-4 mt-6">
+        <h3 class="text-lg font-semibold text-gray-700 mb-3">Quality Measures & Documentation</h3>
+        <div class="space-y-3">
+          {% for qm in quality_measures %}
+          <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-700">{{ qm.label }}</div>
+            {% if qm.status == 'Pending' %}
+              <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Pending</span>
+            {% elif qm.status == 'Completed' %}
+              <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Completed</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Generate Summary & Expert Email (optional) -->
+      <div class="flex justify-end mt-6 space-x-4">
+        <button id="generate_summary_btn" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600">
+          Generate Summary
+        </button>
+        <button id="send_expert_btn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+          Send to Expert
+        </button>
+      </div>
+    </div>
+
+    <!-- Placeholder panels for other tabs (hidden by default) -->
+    <div id="caremgmt" class="tab-panel hidden">
+      <div class="text-gray-500 italic">Care Management content goes here.</div>
+    </div>
+    <div id="documents" class="tab-panel hidden">
+      <div class="text-gray-500 italic">Documents content goes here.</div>
+    </div>
+    <div id="scheduling" class="tab-panel hidden">
+      <div class="text-gray-500 italic">Scheduling content goes here.</div>
+    </div>
+    <div id="encounters" class="tab-panel hidden">
+      <div class="text-gray-500 italic">Encounters content goes here.</div>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // TAB SWITCHING LOGIC
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Clear all active classes
+      tabButtons.forEach(b => {
+        b.classList.remove('border-indigo-500', 'text-gray-700');
+        b.classList.add('text-gray-500');
+      });
+      tabPanels.forEach(p => p.classList.add('hidden'));
+
+      // Activate clicked
+      btn.classList.remove('text-gray-500');
+      btn.classList.add('text-gray-700', 'border-indigo-500');
+      const target = btn.getAttribute('data-tab');
+      document.getElementById(target).classList.remove('hidden');
+    });
+  });
+
+  // Make “Overview” active by default
+  if (tabButtons.length > 0) {
+    tabButtons[0].click();
+  }
+
+  // GENERATE SUMMARY BUTTON HANDLER (AJAX)
+  const genBtn = document.getElementById('generate_summary_btn');
+  if (genBtn) {
+    genBtn.addEventListener('click', async () => {
+      const pid = "{{ selected }}";
+      if (!pid) return;
+
+      genBtn.setAttribute('disabled', 'true');
+      genBtn.innerText = 'Generating...';
+
+      try {
+        const resp = await fetch("{{ url_for('generate_summary') }}", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ patientId: pid })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          alert("Summary generated. Scroll down to see text or download PDF from Summaries page.");
+        } else {
+          alert("Error: " + data.error);
+        }
+      } catch (err) {
+        alert("Error generating summary.");
+      } finally {
+        genBtn.removeAttribute('disabled');
+        genBtn.innerText = 'Generate Summary';
+      }
+    });
+  }
+
+  // SEND TO EXPERT MODAL
+  const sendBtn = document.getElementById('send_expert_btn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', () => {
+      // Show a prompt to pick expert email (you could build a dropdown or prompt())
+      const expertEmail = prompt("Enter expert's email address:");
+      const summaryText = prompt("Paste summary text here, or leave blank to fetch latest:");
+      if (!expertEmail || !summaryText) return;
+
+      fetch("{{ url_for('send_expert_email') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId: "{{ selected }}", expertEmail, summaryText })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message) {
+          alert("Email sent successfully.");
+        } else {
+          alert("Error: " + (data.error || data.message));
+        }
+      })
+      .catch(() => alert("Error sending email."));
+    });
+  }
+
+  // PATIENT LIST SEARCH & CLICK HANDLER
+  const patientSearch = document.getElementById('patient_search');
+  const patientListContainer = document.getElementById('patient_list');
+
+  if (patientSearch && patientListContainer) {
+    patientSearch.addEventListener('input', () => {
+      const term = patientSearch.value.toLowerCase();
+      const rows = patientListContainer.querySelectorAll('.patient-row');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(term)) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+    });
+
+    patientListContainer.querySelectorAll('.patient-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const pid = row.getAttribute('data-pid');
+        window.location.href = "{{ url_for('dashboard', patient_id='') }}" + pid;
+      });
+    });
+  }
+
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Upload Progress Report{% endblock %}
+
+{% block main_content %}
+<div class="max-w-lg mx-auto bg-white shadow rounded-lg p-6">
+  <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Progress Report</h2>
+  <form id="upload_doc_form" method="POST" action="{{ url_for('upload_progress_report') }}" enctype="multipart/form-data" class="space-y-4">
+    <div>
+      <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+      <input type="text" name="patientId" id="patientId" required
+             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+    </div>
+    <div>
+      <label for="reportFile" class="block text-sm font-medium text-gray-700">Report (PDF)</label>
+      <input type="file" name="reportFile" id="reportFile" accept=".pdf" required
+             class="mt-1 block w-full text-sm text-gray-600">
+    </div>
+    <div class="flex justify-end">
+      <button type="submit"
+              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
+        Upload
+      </button>
+    </div>
+    <p id="upload_msg" class="text-sm mt-2 hidden"></p>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const response = await fetch("{{ url_for('upload_progress_report') }}", {
+    method: "POST",
+    body: formData
+  });
+  const data = await response.json();
+  const msgEl = document.getElementById('upload_msg');
+  msgEl.classList.remove('hidden');
+  if (response.ok) {
+    msgEl.classList.remove('text-red-600');
+    msgEl.classList.add('text-green-600');
+    msgEl.innerText = data.message;
+    this.reset();
+  } else {
+    msgEl.classList.remove('text-green-600');
+    msgEl.classList.add('text-red-600');
+    msgEl.innerText = data.error || "Error uploading file.";
+  }
+});
+</script>
+{% endblock %}

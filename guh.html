@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block head %}
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block title %}Dashboard – MediSum{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-full">
+
+  <!-- ===== TOP HEADER BAR ===== -->
+  <header class="bg-white border-b border-gray-200 py-4 px-6 flex items-center justify-between">
+    <!-- Back Arrow + Patient Name & Details -->
+    <div class="flex items-center space-x-4">
+      <a href="{{ url_for('index') }}" class="text-gray-600 hover:text-gray-800">
+        <!-- Back arrow icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 19l-7-7 7-7" />
+        </svg>
+      </a>
+      <div class="flex items-center space-x-3">
+        <img src="{{ patient.photo_url or url_for('static', filename='avatar_placeholder.png') }}" 
+             alt="Avatar"
+             class="h-10 w-10 rounded-full object-cover" />
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800">{{ patient.name or "J. Williams" }}</h2>
+          <p class="text-sm text-gray-500">
+            {{ patient.dob or "02/02/1970" }}, {{ patient.age or "51 y.o." }} • {{ patient.gender or "Male" }} – {{ patient.gender_identity or "Transgender" }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MRN, Acuity, Programs, Tags, Navigation arrows -->
+    <div class="flex items-center space-x-6">
+      <div>
+        <p class="text-xs text-gray-500">MRN</p>
+        <p class="font-medium text-gray-800">{{ patient.mrn or "1482928" }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500">Acuity</p>
+        <p class="font-medium text-red-600 flex items-center">
+          <span class="h-2 w-2 bg-red-600 rounded-full mr-1"></span>
+          {{ patient.acuity or "High" }}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500">Programs</p>
+        <p class="font-medium text-gray-800">{{ patient.programs_count or "2" }}</p>
+      </div>
+      <!-- Tags -->
+      <div class="flex space-x-2">
+        <span class="px-2 py-1 bg-gray-100 text-xs text-gray-700 rounded">Risk</span>
+        <span class="px-2 py-1 bg-gray-100 text-xs text-gray-700 rounded">Market: JV</span>
+        <span class="px-2 py-1 bg-gray-100 text-xs text-gray-700 rounded">Health Plan</span>
+      </div>
+      <!-- Left/Right arrow buttons (for navigating between patients) -->
+      <div class="flex items-center space-x-1">
+        <button class="p-1 hover:bg-gray-100 rounded" title="Previous Patient">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button class="p-1 hover:bg-gray-100 rounded" title="Next Patient">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== TABS ===== -->
+  <nav class="bg-white border-b border-gray-200">
+    <ul class="flex space-x-6 px-6">
+      <li>
+        <button id="tab-overview" class="py-4 text-indigo-600 border-b-2 border-indigo-600 font-medium">
+          Overview
+        </button>
+      </li>
+      <li>
+        <button id="tab-care" class="py-4 text-gray-500 hover:text-indigo-600">
+          Care Management
+        </button>
+      </li>
+      <li>
+        <button id="tab-docs" class="py-4 text-gray-500 hover:text-indigo-600">
+          Documents
+        </button>
+      </li>
+      <li>
+        <button id="tab-sched" class="py-4 text-gray-500 hover:text-indigo-600">
+          Scheduling
+        </button>
+      </li>
+      <li>
+        <button id="tab-enc" class="py-4 text-gray-500 hover:text-indigo-600">
+          Encounters
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ===== MAIN OVERVIEW CONTENT ===== -->
+  <div id="overview-content" class="flex-1 overflow-auto p-6 bg-gray-50">
+    <div class="grid grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: Patient Timeline -->
+      <div class="col-span-12 lg:col-span-4 xl:col-span-3">
+        <div class="bg-white rounded-lg shadow p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Patient Timeline</h3>
+            <select id="year-select" class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option>2024</option>
+              <option>2023</option>
+              <option>2022</option>
+            </select>
+          </div>
+          <div class="relative border-l-2 border-indigo-100 pl-4">
+            <!-- Timeline entries (hardcoded example; ideally pull from patient.timeline list) -->
+            {% for event in patient.timeline %}
+            <div class="mb-8 relative">
+              <span class="absolute -left-3 top-0 h-6 w-6 bg-indigo-600 rounded-full ring-4 ring-white"></span>
+              <p class="text-sm font-semibold text-gray-800">{{ event.date }}</p>
+              <p class="text-base font-medium text-gray-900">{{ event.title }}</p>
+              <p class="text-sm text-gray-500 mt-1">{{ event.desc }}</p>
+            </div>
+            {% endfor %}
+            <!-- Example placeholder if no timeline -->
+            {% if not patient.timeline %}
+            <div class="mb-8 relative">
+              <span class="absolute -left-3 top-0 h-6 w-6 bg-indigo-600 rounded-full ring-4 ring-white"></span>
+              <p class="text-sm font-semibold text-gray-800">Jan 01</p>
+              <p class="text-base font-medium text-gray-900">Treatment</p>
+              <p class="text-sm text-gray-500 mt-1">The health system provides the patient with both on-site and follow-up care with proper management…</p>
+            </div>
+            <div class="mb-8 relative">
+              <span class="absolute -left-3 top-0 h-6 w-6 bg-indigo-600 rounded-full ring-4 ring-white"></span>
+              <p class="text-sm font-semibold text-gray-800">Jan 05</p>
+              <p class="text-base font-medium text-gray-900">Care</p>
+              <p class="text-sm text-gray-500 mt-1">The patient is assessed at a medical facility (physician’s office, hospital, etc.) and taking care…</p>
+            </div>
+            <div class="mb-8 relative">
+              <span class="absolute -left-3 top-0 h-6 w-6 bg-indigo-600 rounded-full ring-4 ring-white"></span>
+              <p class="text-sm font-semibold text-gray-800">Jan 07</p>
+              <p class="text-base font-medium text-gray-900">Initial contact</p>
+              <p class="text-sm text-gray-500 mt-1">The patient makes initial contact with a health system via call center, chat, email and other…</p>
+            </div>
+            <div class="mb-2 relative">
+              <span class="absolute -left-3 top-0 h-6 w-6 bg-indigo-600 rounded-full ring-4 ring-white"></span>
+              <p class="text-sm font-semibold text-gray-800">Jan 23</p>
+              <p class="text-base font-medium text-gray-900">Pre-visit awareness</p>
+              <p class="text-sm text-gray-500 mt-1">A patient’s journey starts when they arrive at your digital front door. This is the process before ini…</p>
+            </div>
+            {% endif %}
+          </div>
+          <div class="mt-4 text-right">
+            <a href="#" class="text-indigo-600 hover:underline text-sm">Full History</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER COLUMN: Description, Goals & Actions, Quality Measures -->
+      <div class="col-span-12 lg:col-span-8 xl:col-span-6 space-y-6">
+
+        <!-- Patient Description -->
+        <div class="bg-white rounded-lg shadow p-5">
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Patient Description</h3>
+          <p class="text-sm text-gray-600">
+            {{ patient.description or "Patients identified with specific conditions falling under HCC may require more intensive care or resources, influencing payment structures within the healthcare system." }}
+          </p>
+        </div>
+
+        <!-- Goals & Activities + Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Goals & Activities -->
+          <div class="bg-white rounded-lg shadow p-5">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Goals & Activities</h3>
+            <div class="space-y-4">
+              {% for goal in patient.goals %}
+              <div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-700">{{ goal.name }}</span>
+                  <span class="text-sm font-medium text-gray-600">{{ goal.progress }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ goal.progress }}%;"></div>
+                </div>
+              </div>
+              {% endfor %}
+              {% if not patient.goals %}
+              <div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-700">Test blood sugar every day</span>
+                  <span class="text-sm font-medium text-gray-600">65%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div class="bg-indigo-600 h-2 rounded-full w-2/3"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-700">Take medication as directed</span>
+                  <span class="text-sm font-medium text-gray-600">40%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div class="bg-indigo-600 h-2 rounded-full w-2/5"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between	items-center">
+                  <span class="text-sm font-medium text-gray-700">Maintain normal BP level</span>
+                  <span class="text-sm font-medium text-gray-600">10%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div class="bg-indigo-600 h-2 rounded-full w-1/10"></div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Actions Checklist -->
+          <div class="bg-white rounded-lg shadow p-5">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Actions</h3>
+            <ul class="space-y-3">
+              {% for action in patient.actions %}
+              <li class="flex items-start">
+                <input
+                  type="checkbox"
+                  id="action-{{ loop.index }}"
+                  {% if action.done %}checked{% endif %}
+                  class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                <label for="action-{{ loop.index }}" class="ml-2 text-gray-700">{{ action.text }}</label>
+              </li>
+              {% endfor %}
+              {% if not patient.actions %}
+              <li class="flex items-start">
+                <input type="checkbox" id="action-1" checked class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                <label for="action-1" class="ml-2 text-gray-700">Brief medical history, allergies, and medications the patient</label>
+              </li>
+              <li class="flex	items-start">
+                <input type="checkbox" id="action-2" class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                <label for="action-2" class="ml-2 text-gray-700">Surgical history to include all invasive procedures the patient has undergone.</label>
+              </li>
+              <li class="flex	items-start">
+                <input type="checkbox" id="action-3" class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                <label for="action-3" class="ml-2 text-gray-700">Prepare medical history document</label>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Quality Measures & Documentation Table -->
+        <div class="bg-white rounded-lg shadow p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Quality Measures &amp; Documentation</h3>
+            <button class="text-sm text-indigo-600 hover:underline">Customize Charts</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
+              <thead>
+                <tr>
+                  <th class="py-3 px-4 font-medium">Measure</th>
+                  <th class="py-3 px-4 font-medium">Status</th>
+                  <th class="py-3 px-4 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                {% for qm in patient.quality_measures %}
+                <tr>
+                  <td class="py-3 px-4">{{ qm.name }}</td>
+                  <td class="py-3 px-4">
+                    {% if qm.status == 'Completed' %}
+                      <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">{{ qm.status }}</span>
+                    {% else %}
+                      <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">{{ qm.status }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="text-gray-400 hover:text-gray-600">
+                      <!-- Dots menu icon -->
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm5-2a2 2 0 100 4 2 2 0 000-4zm5-2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+                {% if not patient.quality_measures %}
+                <tr>
+                  <td class="py-3 px-4">Optimization of sepsis care &amp; Reduced hospital readmissions</td>
+                  <td class="py-3 px-4"><span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Pending</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm5-2a2 2 0 100 4 2 2 0 000-4zm5-2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4">Reduction in medication-related adverse events</td>
+                  <td class="py-3 px-4"><span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Pending</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm5-2a2 2 0 100 4 2 2 0 000-4zm5-2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4">Missed Appointment Policy (Patient Financial Responsibility Waiver)</td>
+                  <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Completed</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm5-2a2 2 0 100 4 2 2 0 000-4zm5-2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4">Improved electronic medical record documentation &amp; Patient Instructions</td>
+                  <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Completed</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button class="text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm5-2a2 2 0 100 4 2 2 0 000-4zm5-2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

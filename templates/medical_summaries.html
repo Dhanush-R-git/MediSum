@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Medical Summaries{% endblock %}
+
+{% block main_content %}
+<div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
+  <h2 class="text-xl font-semibold text-gray-700 mb-4">Medical Summaries</h2>
+  <form method="POST" action="{{ url_for('medical_summaries') }}" class="flex space-x-4 mb-6">
+    <input type="text" name="patientId" placeholder="Patient ID" value="{{ patient_id }}" required
+           class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+    <button type="submit" class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
+      Search
+    </button>
+  </form>
+
+  {% if error %}
+    <p class="text-red-600 mb-4">{{ error }}</p>
+  {% endif %}
+
+  {% if summaries is not none %}
+    {% if summaries|length == 0 %}
+      <p class="text-gray-500">No summaries found for that Patient ID.</p>
+    {% else %}
+      <div class="space-y-4">
+        {% for s in summaries %}
+        <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-700">{{ s.date }}</p>
+            <p class="text-sm text-gray-600 mt-1">{{ s.excerpt }}</p>
+          </div>
+          <a href="{{ url_for('download_file', filename=s.pdf_path) }}" 
+             class="text-indigo-500 hover:text-indigo-700 text-sm font-medium">
+            Download PDF
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

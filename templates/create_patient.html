@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Create Patient{% endblock %}
+
+{% block main_content %}
+<div class="max-w-xl mx-auto bg-white shadow rounded-lg p-6">
+  <h2 class="text-xl font-semibold text-gray-700 mb-4">New Patient Registration</h2>
+  <form id="create_patient_form" method="POST" action="{{ url_for('create_patient') }}" class="space-y-4">
+    <div>
+      <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+      <input type="text" name="name" id="name" required
+             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+    </div>
+    <div>
+      <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+      <input type="date" name="dob" id="dob" required
+             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+    </div>
+    <div>
+      <label for="sex" class="block text-sm font-medium text-gray-700">Sex</label>
+      <select name="sex" id="sex" required
+              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+        <option value="">Select</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Transgender">Transgender</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div>
+      <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+      <input type="email" name="email" id="email" required
+             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+    </div>
+    <div>
+      <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+      <input type="tel" name="phone" id="phone" required
+             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+    </div>
+    <div>
+      <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+      <textarea name="address" id="address" rows="2" required
+                class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"></textarea>
+    </div>
+    <div class="flex justify-end">
+      <button type="submit"
+              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
+        Create Patient
+      </button>
+    </div>
+    <p id="create_patient_msg" class="text-sm mt-2 text-green-600 hidden"></p>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('create_patient_form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const response = await fetch("{{ url_for('create_patient') }}", {
+    method: "POST",
+    body: formData
+  });
+  const data = await response.json();
+  if (response.ok) {
+    document.getElementById('create_patient_msg').classList.remove('hidden', 'text-red-600');
+    document.getElementById('create_patient_msg').classList.add('text-green-600');
+    document.getElementById('create_patient_msg').innerText = "Patient created successfully! ID: " + data.patient_id;
+    this.reset();
+  } else {
+    document.getElementById('create_patient_msg').classList.remove('hidden', 'text-green-600');
+    document.getElementById('create_patient_msg').classList.add('text-red-600');
+    document.getElementById('create_patient_msg').innerText = data.error || "Error creating patient.";
+  }
+});
+</script>
+{% endblock %}

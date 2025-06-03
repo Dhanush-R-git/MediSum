@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Patient Portal{% endblock %}</title>
+  <!-- Tailwind (either CDN dev or compiled local) -->
+  <!-- For dev: -->
+  <!-- <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^3.0/dist/tailwind.min.css" rel="stylesheet"> -->
+  <!-- For production (compiled): -->
+  <!--<link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">-->
+  <!-- 👉 Tailwind via CDN (development) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="h-full font-sans antialiased">
+  <!-- Sidebar + topbar + content -->
+  <div class="flex h-full">
+    <!-- Sidebar -->
+    <aside class="w-16 bg-white border-r border-gray-200 flex flex-col items-center py-4">
+      <!-- Logo / Home Icon -->
+      <a href="{{ url_for('dashboard') }}" class="mb-6">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="h-8 w-8">
+      </a>
+      <!-- Sidebar Icons (Overview, Care Mgmt, Documents, Scheduling, Encounters) -->
+      <nav class="space-y-6 flex-1">
+        <button id="tab-overview-btn" class="sidebar-icon active" data-target="overview">
+          <!-- Use Heroicons or inline SVG icons -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- Home icon as placeholder -->
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9m0 0l9 9m-9-9v18" />
+          </svg>
+        </button>
+        <button id="tab-care-btn" class="sidebar-icon" data-target="caremgmt">
+          <!-- Heartbeat icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l5 5 4-4 2 2M13 7h8" />
+          </svg>
+        </button>
+        <button id="tab-docs-btn" class="sidebar-icon" data-target="documents">
+          <!-- Document icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 0v12a1 1 0 01-1 1H5a1 1 0 01-1-1V9m0 0L8 5m4-4v4" />
+          </svg>
+        </button>
+        <button id="tab-schedule-btn" class="sidebar-icon" data-target="scheduling">
+          <!-- Calendar icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-4-4v4m0 0v4" />
+          </svg>
+        </button>
+        <button id="tab-encounters-btn" class="sidebar-icon" data-target="encounters">
+          <!-- User group / people icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-1a4 4 0 00-3-3.87m-2 0a4 4 0 10-8 0m8 0H9m-6 0H4v-1a4 4 0 013-3.87m2 0a4 4 0 108 0m-8 0H4" />
+          </svg>
+        </button>
+      </nav>
+      <!-- Logout Icon at bottom -->
+      <div class="mt-auto mb-4">
+        <a href="{{ url_for('logout') }}" class="text-gray-500 hover:text-red-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- Logout icon -->
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+          </svg>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex‐1 flex flex-col">
+      <!-- Top Navbar (Patient Name, MRN, Acuity, Programs, Risk tags) -->
+      <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        {% if selected %}
+        <div class="flex items-center space-x-4">
+          <!-- Back Arrow icon -->
+          <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke‐linecap="round" stroke‐linejoin="round" stroke‐width="2" d="M15 19l‐7‐7 7‐7" />
+            </svg>
+          </a>
+          <div class="flex items-center space-x-3">
+            <!-- Patient Avatar Placeholder -->
+            <div class="h-10 w-10 rounded-full bg-indigo-200 flex items-center justify-center">
+              <span class="text-indigo-700 font-semibold text-lg">{{ patient_data.name[0] }}</span>
+            </div>
+            <div>
+              <h1 class="text-xl font-semibold">{{ patient_data.name }}</h1>
+              <p class="text-sm text-gray-500">{{ patient_data.dob.strftime('%m/%d/%Y') }} • {{ patient_data.sex }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-6">
+          <!-- MRN -->
+          <div class="text-sm text-gray-600">
+            <span class="font-medium">MRN:</span> {{ patient_data.patient_id }}
+          </div>
+          <!-- Acuity -->
+          <div class="flex items-center space-x-1">
+            <span class="text-sm font-medium text-gray-600">Acuity:</span>
+            <span class="text-sm font-semibold text-red-500">High</span>
+          </div>
+          <!-- Programs (number) -->
+          <div class="flex items-center space-x-1">
+            <span class="text-sm font-medium text-gray-600">Programs:</span>
+            <span class="text-sm font-semibold text-indigo-500">2</span>
+          </div>
+          <!-- Tags: Risk, Market, Health Plan -->
+          <div class="flex space-x-2">
+            <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Risk</span>
+            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Market: JV</span>
+            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Health Plan</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-lg font-semibold text-gray-700">Patient Portal Dashboard</div>
+        {% endif %}
+      </header>
+
+      <!-- Page Body -->
+      <div class="flex‐1 flex overflow‐hidden">
+
+        <!-- Left / Middle Content (Tabs & Details) -->
+        <main class="flex‐1 overflow‐auto px-6 py-4 space-y-6">
+          {% block main_content %}{% endblock %}
+        </main>
+
+        <!-- Right Panel: Patients List & Search -->
+        <aside class="w-64 bg-white border-l border-gray-200">
+          <div class="p-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-medium text-gray-700">Patients</h2>
+              <button id="toggle_patient_list" class="text-gray-500 hover:text-gray-700">
+                <!-- Collapse/expand arrow -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 01.707 1.707L7.414 8h5.586a1 1 0 110 2H7.414l3.293 3.293a1 1 0 01-1.414 1.414l-5-5a1 1 0 010-1.414l5-5A1 1 0 0110 3z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <div class="mt-4">
+              <input type="text" id="patient_search" placeholder="Search patients..." 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            </div>
+            <div id="patient_list" class="mt-4 space-y-2 overflow-auto h-[calc(100vh-200px)]">
+              {% for p in patients %}
+              <div class="patient-row {% if selected == p.patient_id %}bg-indigo-50{% endif %} px-3 py-2 rounded-lg hover:bg-indigo-100 cursor-pointer flex items-center" data-pid="{{ p.patient_id }}">
+                <div class="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center mr-2">
+                  <span class="text-indigo-700 font-semibold">{{ p.display[0] }}</span>
+                </div>
+                <div class="flex-1 text-sm">
+                  <div class="font-medium">{{ p.display }}</div>
+                  <div class="text-gray-500">ID: {{ p.patient_id }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="pt-4 flex justify-end">
+              <a href="{{ url_for('create_patient') }}" class="inline-flex items-center px-3 py-1 bg-indigo-500 text-white text-sm font-medium rounded-md hover:bg-indigo-600">
+                + New
+              </a>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

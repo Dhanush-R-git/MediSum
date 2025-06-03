@@ -1,0 +1,165 @@
+/* ────────────────────────────────────────────────────────────────────
+   static/css/main.css
+   (A “post‐Tailwind” override file: no @apply here, just plain CSS)
+   ──────────────────────────────────────────────────────────────────── */
+
+/* ========== Sidebar Icon Styling ========== */
+/* Default: gray‐500, on hover: indigo‐500 */
+.sidebar-icon svg {
+  color: #6B7280; /* tailwind’s text-gray-500 */
+  transition: color 0.2s ease-in-out;
+}
+.sidebar-icon:hover svg {
+  color: #6366F1; /* tailwind’s text-indigo-500 */
+}
+/* Active icon should stay indigo-500 */
+.sidebar-icon.active svg {
+  color: #6366F1; /* text-indigo-500 */
+}
+
+/* ========== Patient Row (Right Panel) ========== */
+.patient-row {
+  padding: 0.5rem 0.75rem;   /* py-2 px-3 */
+  border-radius: 0.5rem;     /* rounded-lg */
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+/* Hover = bg-indigo-100 */
+.patient-row:hover {
+  background-color: #E0E7FF; /* tailwind’s bg-indigo-100 */
+}
+/* If marked “active” (or uses bg-indigo-50), override */
+.patient-row.active,
+.patient-row.active:hover {
+  background-color: #EFF6FF; /* tailwind’s bg-indigo-50 */
+}
+
+/* ========== Timeline (Overview Tab) ========== */
+/* A vertical line behind the dots */
+.timeline-container {
+  position: relative;
+}
+.timeline-container::before {
+  content: "";
+  position: absolute;
+  left: 8px;               /* center of 0.5rem‐wide dot */
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #E5E7EB; /* tailwind’s bg-gray-200 */
+}
+/* The little dot for each timeline item */
+.timeline-dot {
+  height: 0.5rem;            /* h-2 */
+  width: 0.5rem;             /* w-2 */
+  border-radius: 9999px;     /* rounded-full */
+  background-color: #6366F1; /* tailwind’s bg-indigo-500 */
+  flex-shrink: 0;
+  position: relative;
+  left: 8px;                 /* align with the vertical line */
+}
+
+/* ========== Scrollbar for Patient List ========== */
+#patient_list {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent; /* thumb gray-300, track transparent */
+}
+#patient_list::-webkit-scrollbar {
+  width: 6px;
+}
+#patient_list::-webkit-scrollbar-thumb {
+  background-color: #D1D5DB;   /* tailwind’s gray-300 */
+  border-radius: 9999px;       /* rounded-full */
+}
+#patient_list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ========== Status Badges (Quality Measures) ========== */
+.badge-pending {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;      /* px-2 py-1 */
+  font-size: 0.625rem;          /* text-xs */
+  font-weight: 500;             /* font-medium */
+  background-color: #FEF3C7;    /* tailwind’s bg-yellow-100 */
+  color: #854D0E;               /* tailwind’s text-yellow-800 */
+  border-radius: 9999px;        /* rounded-full */
+}
+.badge-completed {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;      /* px-2 py-1 */
+  font-size: 0.625rem;          /* text-xs */
+  font-weight: 500;             /* font-medium */
+  background-color: #D1FAE5;    /* tailwind’s bg-green-100 */
+  color: #065F46;               /* tailwind’s text-green-800 */
+  border-radius: 9999px;        /* rounded-full */
+}
+
+/* ========== Goals & Activities (Progress Bars) ========== */
+/* Container barrel behind the fill */
+.progress-bar-container {
+  width: 100%;
+  background-color: #E5E7EB;  /* tailwind’s bg-gray-200 */
+  border-radius: 9999px;      /* rounded-full */
+  height: 0.5rem;             /* h-2 */
+}
+/* The colored “fill” */
+.progress-bar-fill {
+  background-color: #6366F1; /* tailwind’s bg-indigo-500 */
+  height: 0.5rem;            /* h-2 */
+  border-radius: 9999px;     /* rounded-full */
+}
+
+/* ========== Toggle Patient List Arrow (Rotate on Collapse) ========== */
+#toggle_patient_list svg {
+  transition: transform 0.2s ease-in-out;
+}
+#toggle_patient_list.collapsed svg {
+  transform: rotate(180deg);
+}
+
+/* ========== Input Focus Outline (Forms) ========== */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #C7D2FE; /* ring-2 ring-indigo-200 */
+}
+
+/* ========== Cards / Panels (e.g. Timeline, Description, Goals, etc.) ========== */
+.card {
+  background-color: #FFFFFF;
+  border-radius: 0.5rem;                                    /* rounded-lg */
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);                 /* shadow */
+  padding: 1rem;                                            /* p-4 */
+}
+
+/* ========== Header (Top Navbar) ========== */
+header {
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;                         /* border-gray-200 */
+  padding: 1rem 1.5rem;                                     /* px-6 py-4 */
+}
+
+/* ========== Centered Login/Register Card ========== */
+.login-card,
+.register-card {
+  background-color: #FFFFFF;
+  padding: 2rem;                                            /* p-8 */
+  border-radius: 0.5rem;                                    /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 
+              0 4px 6px -2px rgba(0,0,0,0.05);              /* shadow-lg */
+  max-width: 20rem; /* 320px = “max-w-md” */
+  width: 100%;
+  margin: auto;
+}
+
+/* ========== Utility: Hide Scrollbar on Other Panels ========== */
+.no-scrollbar {
+  scrollbar-width: none;        /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;               /* Safari and Chrome */
+}
