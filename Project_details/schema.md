@@ -1,4 +1,4 @@
----
+
 ```text
 +---------+      +-----------+      +--------------+
 |  users  |      | patients  |      |  summaries   |
@@ -14,6 +14,7 @@
       |                                    |          |
       +------------------------------------+----------+
 ```
+---
 - **Arrows** show foreign key relationships.
 - `generated_by` in summaries references `users._id`.
 - `patient_id` in summaries references `patients._id`.
