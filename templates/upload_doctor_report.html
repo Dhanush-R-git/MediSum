@@ -2,52 +2,151 @@
 {% block title %}Upload Doctor Report{% endblock %}
 
 {% block main_content %}
-<div class="max-w-lg mx-auto bg-white shadow rounded-lg p-6">
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Doctor Report</h2>
-  <form id="upload_doc_form" method="POST" action="{{ url_for('upload_doctor_report') }}" enctype="multipart/form-data" class="space-y-4">
-    <div>
-      <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
-      <input type="text" name="patientId" id="patientId" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+  <!-- 
+    We wrap everything in a flex container (space-x-6) so that:
+    - The left side is the “form & file‐preview” panel
+    - The right side is the “doctor notes” panel
+  -->
+  <div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6 flex space-x-6">
+    
+    <!-- ──────────────────────────────────────────────────────────────────────────
+         LEFT PANEL: File Upload + Existing‐File Preview
+         ────────────────────────────────────────────────────────────────────────── -->
+    <div class="w-1/2 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Doctor Report</h2>
+      
+      <!-- Patient ID Input -->
+      <div class="mb-4">
+        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+        <input
+          type="text"
+          name="patientId"
+          id="patientId"
+          required
+          class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          placeholder="e.g. PAT0001"
+        />
+      </div>
+      
+      <!-- PDF File Input -->
+      <div class="mb-4">
+        <label for="reportFile" class="block text-sm font-medium text-gray-700">Report (PDF)</label>
+        <input
+          type="file"
+          name="reportFile"
+          id="reportFile"
+          accept=".pdf"
+          required
+          class="mt-1 block w-full text-sm text-gray-600"
+        />
+      </div>
+
+      <!-- Instant “Preview” of the Selected File Name -->
+      <div id="file_preview" class="mb-4 text-sm text-gray-500 italic">
+        <!-- this will be populated by JS when a file is chosen -->
+        No file selected.
+      </div>
+
+      <!-- Submit Button (aligned to the right of this left panel) -->
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          form="upload_doc_form" 
+          class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600"
+        >
+          Upload
+        </button>
+      </div>
+
+      <!-- Upload result message -->
+      <p id="upload_msg" class="text-sm mt-2 hidden"></p>
     </div>
-    <div>
-      <label for="reportFile" class="block text-sm font-medium text-gray-700">Report (PDF)</label>
-      <input type="file" name="reportFile" id="reportFile" accept=".pdf" required
-             class="mt-1 block w-full text-sm text-gray-600">
+    <!-- end LEFT PANEL -->
+
+
+    <!-- ──────────────────────────────────────────────────────────────────────────
+         RIGHT PANEL: Doctor Notes Textarea
+         ────────────────────────────────────────────────────────────────────────── -->
+    <div class="w-1/2 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">Doctor’s Notes</h2>
+      <textarea
+        name="doctorNotes"
+        id="doctorNotes"
+        rows="15"
+        placeholder="Enter any clinical observations, instructions, or summary here..."
+        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+      ></textarea>
     </div>
-    <div class="flex justify-end">
-      <button type="submit"
-              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
-        Upload
-      </button>
-    </div>
-    <p id="upload_msg" class="text-sm mt-2 hidden"></p>
+    <!-- end RIGHT PANEL -->
+
+  </div>
+
+
+  <!-- ──────────────────────────────────────────────────────────────────────────
+       IMPORTANT: We place the <form> tags _outside_ of the flex panels,
+       but we point it at form="upload_doc_form" on the button above. This
+       ensures the textarea (“doctorNotes”) and the file input both live inside
+       that same <form> when the user clicks “Upload”.
+  ────────────────────────────────────────────────────────────────────────── -->
+  <form
+    id="upload_doc_form"
+    method="POST"
+    action="{{ url_for('upload_doctor_report') }}"
+    enctype="multipart/form-data"
+    class="hidden"
+  >
+    <!-- The only “visible” elements in this form are the file input & patientId & textarea,
+         because we associated them via form="upload_doc_form". -->
+    <!-- (No additional markup is needed here.) -->
   </form>
-</div>
 {% endblock %}
 
+
 {% block scripts %}
-<script>
-document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const formData = new FormData(this);
-  const response = await fetch("{{ url_for('upload_doctor_report') }}", {
-    method: "POST",
-    body: formData
-  });
-  const data = await response.json();
-  const msgEl = document.getElementById('upload_msg');
-  msgEl.classList.remove('hidden');
-  if (response.ok) {
-    msgEl.classList.remove('text-red-600');
-    msgEl.classList.add('text-green-600');
-    msgEl.innerText = data.message;
-    this.reset();
-  } else {
-    msgEl.classList.remove('text-green-600');
-    msgEl.classList.add('text-red-600');
-    msgEl.innerText = data.error || "Error uploading file.";
-  }
-});
-</script>
+  <script>
+    // 1) As soon as the user chooses a file, display its name in #file_preview
+    document.getElementById('reportFile').addEventListener('change', function() {
+      const preview = document.getElementById('file_preview');
+      if (this.files.length > 0) {
+        preview.innerText = "Selected file: " + this.files[0].name;
+      } else {
+        preview.innerText = "No file selected.";
+      }
+    });
+
+    // 2) Hijack the form submission with fetch() so we can show a success/error message
+    document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Build FormData from the hidden <form>, which includes:
+      // - patientId
+      // - reportFile
+      // - doctorNotes
+      const formData = new FormData(this);
+
+      const response = await fetch("{{ url_for('upload_doctor_report') }}", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+
+      const msgEl = document.getElementById('upload_msg');
+      msgEl.classList.remove('hidden');
+
+      if (response.ok) {
+        msgEl.classList.remove('text-red-600');
+        msgEl.classList.add('text-green-600');
+        msgEl.innerText = data.message;
+
+        // Clear the fields after successful upload
+        this.reset();
+        document.getElementById('file_preview').innerText = "No file selected.";
+        document.getElementById('doctorNotes').value = "";
+      } else {
+        msgEl.classList.remove('text-green-600');
+        msgEl.classList.add('text-red-600');
+        msgEl.innerText = data.error || "Error uploading file.";
+      }
+    });
+  </script>
 {% endblock %}

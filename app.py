@@ -1,4 +1,4 @@
-# app.py
+# app.py imports
 
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify, send_file, abort
 from pymongo import MongoClient
@@ -8,6 +8,7 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 from utils.security import hash_password, check_password, login_required, role_required
 from utils.file_utils import validate_pdf, save_upload
+from werkzeug.utils import secure_filename
 
 # from langchain imports libraries to keep the summary‐generation pipeline
 from langchain_community.document_loaders import PyPDFLoader
@@ -42,6 +43,9 @@ app.config.update(
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD'),
     MAIL_USE_TLS  = os.getenv('MAIL_USE_TLS', 'False').lower() in ('1','true','yes')
 )
+
+ALLOWED_IMAGE_EXTS = {'.jpg', '.jpeg', '.png'}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB per image, for example
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -354,40 +358,98 @@ def upload_doctor_report():
     return render_template('upload_doctor_report.html')
 
 
+def allowed_image(filename):
+    ext = os.path.splitext(filename.lower())[1]
+    return ext in ALLOWED_IMAGE_EXTS
+
 @app.route('/upload_scan_report', methods=['GET', 'POST'])
 @role_required('doctor', 'radiologist')
 def upload_scan_report():
     """
-    Radiologists or doctors can upload scan (radiology) report.
+    Radiologists or doctors can upload a scan PDF, write scan notes,
+    and upload multiple scan images.
     """
     if request.method == 'POST':
-        patient_id = request.form.get('patientId').strip()
-        report_file = request.files.get('reportFile')
-        if not patient_id or not report_file:
-            return jsonify({'error': 'Patient ID and report file are required'}), 400
+        patient_id = request.form.get('patientId', '').strip()
+        scan_notes = request.form.get('scanNotes', '').strip()
+        pdf_file   = request.files.get('reportFile')
+        image_files = request.files.getlist('imageFiles')
+
+        # 1) Basic validation
+        if not patient_id:
+            return jsonify({'error': 'Patient ID is required'}), 400
 
         patient = db.patients.find_one({'patient_id': patient_id})
         if not patient:
             return jsonify({'error': 'Patient ID not found'}), 404
 
-        if not validate_pdf(report_file):
-            return jsonify({'error': 'Uploaded file must be a valid PDF'}), 400
+        updates = {}
+        logs = []
 
-        rel_path = save_upload(report_file, 'scan_reports')
-        db.patients.update_one(
-            {'patient_id': patient_id},
-            {'$set': {'scan_report': rel_path}}
-        )
-        db.reports_log.insert_one({
-            'patient_id': patient_id,
-            'report_type': 'scan',
-            'uploaded_by': session['user_id'],
-            'file_path': rel_path,
-            'timestamp': datetime.utcnow()
-        })
-        return jsonify({'message': 'Scan report uploaded successfully'})
+        # 2) Handle PDF upload (if provided)
+        if pdf_file and pdf_file.filename:
+            if not validate_pdf(pdf_file):
+                return jsonify({'error': 'Uploaded file must be a valid PDF'}), 400
 
-    return render_template('upload_scan_report.html')
+            rel_pdf = save_upload(pdf_file, 'scan_reports')
+            updates['scan_report'] = rel_pdf
+            logs.append({
+                'report_type': 'scan_pdf',
+                'file_path': rel_pdf
+            })
+
+        # 3) Handle scan notes (always update)
+        updates['scan_notes'] = scan_notes
+
+        # 4) Handle image uploads
+        saved_images = []
+        for img in image_files:
+            if not img or not img.filename:
+                continue
+            if not allowed_image(img.filename):
+                continue
+            # size check
+            img.stream.seek(0, os.SEEK_END)
+            size = img.stream.tell()
+            img.stream.seek(0)
+            if size > MAX_IMAGE_SIZE:
+                continue
+
+            rel_img = save_upload(img, 'scan_images')
+            saved_images.append(rel_img)
+            logs.append({
+                'report_type': 'scan_image',
+                'file_path': rel_img
+            })
+
+        if saved_images:
+            # push to an array field
+            updates.setdefault('scan_image_paths', [])
+            # use $each to append multiple
+            db.patients.update_one(
+                {'patient_id': patient_id},
+                {'$push': {'scan_image_paths': {'$each': saved_images}}}
+            )
+
+        # 5) Apply all other updates (notes and PDF)
+        if updates:
+            db.patients.update_one({'patient_id': patient_id}, {'$set': updates})
+
+        # 6) Log all uploads
+        for entry in logs:
+            db.reports_log.insert_one({
+                'patient_id': patient_id,
+                'uploaded_by': session['user_id'],
+                'timestamp': datetime.utcnow(),
+                **entry
+            })
+
+        return jsonify({'message': 'Scan data uploaded successfully'})
+
+    # GET
+    # Optionally fetch patient_data to pre‐fill patient_id, notes, and existing PDF
+    return render_template('upload_scan_report.html', patient_data=None)
+
 
 
 @app.route('/upload_blood_report', methods=['GET', 'POST'])

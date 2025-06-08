@@ -1,53 +1,309 @@
+{# upload_scan_report.html #}
 {% extends "base.html" %}
 {% block title %}Upload Scan Report{% endblock %}
 
 {% block main_content %}
-<div class="max-w-lg mx-auto bg-white shadow rounded-lg p-6">
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Scan Report</h2>
-  <form id="upload_doc_form" method="POST" action="{{ url_for('upload_scan_report') }}" enctype="multipart/form-data" class="space-y-4">
-    <div>
-      <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
-      <input type="text" name="patientId" id="patientId" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+  <div class="max-w-5xl mx-auto bg-white shadow rounded-lg p-6">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-6">Upload / Verify Scan Report</h2>
+
+    <!-- Flex Container: Left = Existing PDF Preview, Right = Form Inputs -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      
+      <!-- ────────────────────────────────────────────────────────────────────────
+             LEFT COLUMN: Verify / Preview Previously Uploaded Scan PDF
+           ──────────────────────────────────────────────────────────────────────── -->
+      <div class="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-4">
+        <h3 class="text-lg font-medium text-gray-700 mb-4">Preview</h3>
+
+        <!-- PDF Preview -->
+        <div id="pdfPreviewContainer" class="aspect-w-3 aspect-h-4 border border-gray-300 rounded-lg overflow-hidden hidden mb-4 relative">
+          <iframe id="pdfPreview" class="w-full h-full" frameborder="0"></iframe>
+          <button id="expandPdf" type="button"
+            class="absolute top-2 right-2 bg-white bg-opacity-80 hover:bg-opacity-100 border border-gray-300 rounded-full p-2 shadow text-gray-700"
+            title="Expand PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" />
+            </svg>
+          </button>
+        </div>
+        <p id="noPdfMsg" class="text-gray-500">No PDF selected.</p>
+
+        <!-- Image Thumbnails -->
+        <div class="relative">
+          <div id="imgPreviewContainer" class="grid grid-cols-3 gap-2 hidden mt-4">
+            <!-- JS will inject <img> tags here -->
+          </div>
+          <button id="expandImages" type="button"
+            class="absolute top-2 right-2 bg-white bg-opacity-80 hover:bg-opacity-100 border border-gray-300 rounded-full p-2 shadow text-gray-700"
+            title="Expand Images">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" />
+            </svg>
+          </button>
+        </div>
+        <p id="noImgMsg" class="text-gray-500 mt-4">No images selected.</p>
+      </div>
+      <!-- end LEFT COLUMN -->
+
+
+      <!-- ────────────────────────────────────────────────────────────────────────
+             RIGHT COLUMN: Form to Upload New Scan + Notes + Images
+           ──────────────────────────────────────────────────────────────────────── -->
+      <div class="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-4">
+        <h3 class="text-lg font-medium text-gray-700 mb-4">Add / Update Scan Info</h3>
+
+        <form
+          id="upload_scan_form"
+          method="POST"
+          action="{{ url_for('upload_scan_report') }}"
+          enctype="multipart/form-data"
+          class="space-y-4"
+        >
+          <!-- Patient ID -->
+          <div>
+            <label for="patientId" class="block text-sm font-medium text-gray-700">
+              Patient ID
+            </label>
+            <input
+              type="text"
+              name="patientId"
+              id="patientId"
+              value="{{ patient_data.patient_id if patient_data else '' }}"
+              required
+              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              placeholder="e.g. PAT0001"
+            />
+          </div>
+
+          <!-- Scan PDF (New Upload) -->
+          <div>
+            <label for="reportFile" class="block text-sm font-medium text-gray-700">
+              Scan Report (PDF)
+            </label>
+            <input
+              type="file"
+              name="reportFile"
+              id="reportFile"
+              accept=".pdf"
+              class="mt-1 block w-full text-sm text-gray-600"
+            />
+            <p class="mt-1 text-gray-500 text-xs">Upload a PDF file if you want to replace / add to existing scan.</p>
+          </div>
+
+          <!-- Scan Notes (Textarea) -->
+          <div>
+            <label for="scanNotes" class="block text-sm font-medium text-gray-700">
+              Scan Notes
+            </label>
+            <textarea
+              name="scanNotes"
+              id="scanNotes"
+              rows="4"
+              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              placeholder="Enter any scanning observations or radiologist notes here…"
+            >{{ patient_data.scan_notes if patient_data and patient_data.scan_notes else '' }}</textarea>
+          </div>
+
+          <!-- Scan Images (Multiple) -->
+          <div>
+            <label for="imageFiles" class="block text-sm font-medium text-gray-700">
+              Scan Image Files (JPEG/PNG)
+            </label>
+            <input
+              type="file"
+              name="imageFiles"
+              id="imageFiles"
+              accept=".jpg,.jpeg,.png"
+              multiple
+              class="mt-1 block w-full text-sm text-gray-600"
+            />
+            <p class="mt-1 text-gray-500 text-xs">Select one or more image files (e.g., DICOM previews, screenshots).</p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="flex justify-end">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600"
+            >
+              Save Scan Data
+            </button>
+          </div>
+
+          <!-- Status Message -->
+          <p id="upload_msg" class="text-sm mt-2 hidden"></p>
+        </form>
+      </div>
+      <!-- end RIGHT COLUMN -->
+
     </div>
-    <div>
-      <label for="reportFile" class="block text-sm font-medium text-gray-700">Report (PDF)</label>
-      <input type="file" name="reportFile" id="reportFile" accept=".pdf" required
-             class="mt-1 block w-full text-sm text-gray-600">
+    <!-- end FLEX CONTAINER -->
+
+  </div>
+
+  <!-- Modal for expanded PDF/Image preview -->
+  <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-auto relative" id="modalContentWrapper">
+      <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold z-10" title="Close">&times;</button>
+      <div id="modalContent" class="p-4 flex justify-center items-center"></div>
     </div>
-    <div class="flex justify-end">
-      <button type="submit"
-              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
-        Upload
-      </button>
-    </div>
-    <p id="upload_msg" class="text-sm mt-2 hidden"></p>
-  </form>
-</div>
+  </div>
 {% endblock %}
+
 
 {% block scripts %}
 <script>
-document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const formData = new FormData(this);
-  const response = await fetch("{{ url_for('upload_scan_report') }}", {
-    method: "POST",
-    body: formData
+  const pdfInput = document.getElementById('reportFile');
+  const imgInput = document.getElementById('imageFiles');
+  const pdfPreviewContainer = document.getElementById('pdfPreviewContainer');
+  const pdfPreview         = document.getElementById('pdfPreview');
+  const noPdfMsg           = document.getElementById('noPdfMsg');
+  const imgPreviewContainer= document.getElementById('imgPreviewContainer');
+  const noImgMsg           = document.getElementById('noImgMsg');
+  const MAX_IMAGE_SIZE     = 5 * 1024 * 1024; // 5 MB
+
+  const modal      = document.getElementById('previewModal');
+  const modalClose = document.getElementById('closeModal');
+  const modalBody  = document.getElementById('modalContent');
+
+
+  // 1) Preview PDF on selection
+  pdfInput.addEventListener('change', () => {
+    const file = pdfInput.files[0];
+    if (!file) {
+      pdfPreviewContainer.classList.add('hidden');
+      noPdfMsg.classList.remove('hidden');
+      return;
+    }
+    // Validate type & size
+    if (file.type !== 'application/pdf' || file.size > 10 * 1024 * 1024) {
+      alert('Please select a PDF under 10 MB.');
+      pdfInput.value = '';
+      return;
+    }
+    // Show preview
+    const url = URL.createObjectURL(file);
+    pdfPreview.src = url;
+    pdfPreviewContainer.classList.remove('hidden');
+    noPdfMsg.classList.add('hidden');
   });
-  const data = await response.json();
+
+  // 2) Preview Images on selection
+  imgInput.addEventListener('change', () => {
+    const files = Array.from(imgInput.files);
+    imgPreviewContainer.innerHTML = ''; // clear previous
+    if (!files.length) {
+      imgPreviewContainer.classList.add('hidden');
+      noImgMsg.classList.remove('hidden');
+      return;
+    }
+
+    let anyValid = false;
+    files.forEach(file => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['jpg','jpeg','png'].includes(ext) || file.size > MAX_IMAGE_SIZE) {
+        return; // skip invalid
+      }
+      anyValid = true;
+      const imgURL = URL.createObjectURL(file);
+      const imgEl = document.createElement('img');
+      imgEl.src = imgURL;
+      imgEl.className = 'h-24 w-full object-cover rounded-lg border border-gray-300 cursor-pointer transition-transform hover:scale-105';
+      // Add click event for expand
+      imgEl.addEventListener('click', () => {
+        modalBody.innerHTML = `<img src="${imgURL}" class="max-w-full max-h-[80vh] rounded-lg" />`;
+        modal.classList.remove('hidden');
+      });
+      imgPreviewContainer.appendChild(imgEl);
+    });
+
+    if (anyValid) {
+      imgPreviewContainer.classList.remove('hidden');
+      noImgMsg.classList.add('hidden');
+    } else {
+      noImgMsg.innerText = 'No valid images selected (JPG/PNG under 5 MB).';
+      noImgMsg.classList.remove('hidden');
+      imgPreviewContainer.classList.add('hidden');
+      imgInput.value = ''; // reset
+    }
+  });
+
+  // 3) Show loading spinner on submit
+  const form = document.getElementById('upload_scan_form');
   const msgEl = document.getElementById('upload_msg');
-  msgEl.classList.remove('hidden');
-  if (response.ok) {
-    msgEl.classList.remove('text-red-600');
-    msgEl.classList.add('text-green-600');
-    msgEl.innerText = data.message;
-    this.reset();
-  } else {
-    msgEl.classList.remove('text-green-600');
-    msgEl.classList.add('text-red-600');
-    msgEl.innerText = data.error || "Error uploading file.";
-  }
-});
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msgEl.classList.add('text-gray-500');
+    msgEl.innerHTML = 'Uploading… <span class="animate-spin inline-block w-4 h-4 border-2 border-t-2 border-gray-700 rounded-full"></span>';
+    msgEl.classList.remove('hidden');
+
+    const formData = new FormData(form);
+    const resp = await fetch(form.action, { method: 'POST', body: formData });
+    const data = await resp.json();
+
+    if (resp.ok) {
+      msgEl.classList.replace('text-gray-500','text-green-600');
+      msgEl.textContent = data.message || 'Upload successful!';
+      form.reset();
+      // clear previews
+      pdfPreviewContainer.classList.add('hidden');
+      noPdfMsg.classList.remove('hidden');
+      imgPreviewContainer.classList.add('hidden');
+      noImgMsg.classList.remove('hidden');
+    } else {
+      msgEl.classList.replace('text-gray-500','text-red-600');
+      msgEl.textContent = data.error || 'Upload failed.';
+    }
+  });
+
+    // Expand PDF
+  document.getElementById('expandPdf').addEventListener('click', () => {
+    const src = pdfPreview.src;
+    if (!src) return;
+    modalBody.innerHTML = `<iframe src="${src}" class="w-screen h-screen" frameborder="0"></iframe>`;
+    modal.classList.remove('hidden');
+  });
+/*
+  // Expand PDF
+  expandPdfBtn.addEventListener('click', () => {
+    const src = pdfPreview.src;
+    if (!src) return;
+    modalBody.innerHTML = `<iframe src="${src}" class="w-screen h-screen" frameborder="0"></iframe>`;
+    modal.classList.remove('hidden');
+  });
+
+  // Expand PDF
+  document.getElementById('expandPdf').addEventListener('click', () => {
+    const src = pdfPreview.src;
+    if (!src) return;
+    modalBody.innerHTML = `<iframe src="${src}" class="w-screen h-screen" frameborder="0"></iframe>`;
+    modal.classList.remove('hidden');
+  });
+*/
+  // Expand Images
+  document.getElementById('expandImages').addEventListener('click', () => {
+    const imgs = Array.from(document.querySelectorAll('#imgPreviewContainer img'));
+    if (!imgs.length) return;
+    // build a simple carousel or grid
+    modalBody.innerHTML = imgs.map(img => 
+      `<img src="${img.src}" class="max-w-full max-h-full mb-4" />`
+    ).join('');
+    modal.classList.remove('hidden');
+  });
+
+  // Close modal
+  modalClose.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    modalBody.innerHTML = '';
+  });
+
+  // Clicking outside content closes modal
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+      modalBody.innerHTML = '';
+    }
+  });
 </script>
+
 {% endblock %}
