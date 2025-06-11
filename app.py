@@ -451,41 +451,85 @@ def upload_scan_report():
     return render_template('upload_scan_report.html', patient_data=None)
 
 
-
 @app.route('/upload_blood_report', methods=['GET', 'POST'])
 @role_required('doctor', 'lab_tech')
 def upload_blood_report():
     """
-    Lab technicians or doctors can upload blood report (PDF).
+    Lab technicians or doctors can upload a blood report PDF,
+    enter notes, and input multiple test values.
     """
     if request.method == 'POST':
-        patient_id = request.form.get('patientId').strip()
-        report_file = request.files.get('reportFile')
-        if not patient_id or not report_file:
-            return jsonify({'error': 'Patient ID and report file are required'}), 400
+        # 1) Retrieve form fields
+        patient_id  = request.form.get('patientId', '').strip()
+        blood_notes = request.form.get('bloodNotes', '').strip()
+        pdf_file    = request.files.get('reportFile')
+
+        # 2) Basic validation
+        if not patient_id:
+            return jsonify({'error': 'Patient ID is required'}), 400
 
         patient = db.patients.find_one({'patient_id': patient_id})
         if not patient:
             return jsonify({'error': 'Patient ID not found'}), 404
 
-        if not validate_pdf(report_file):
-            return jsonify({'error': 'Uploaded file must be a valid PDF'}), 400
+        # Collect updates and logs
+        updates = {}
+        logs    = []
 
-        rel_path = save_upload(report_file, 'blood_reports')
-        db.patients.update_one(
-            {'patient_id': patient_id},
-            {'$set': {'blood_report': rel_path}}
-        )
-        db.reports_log.insert_one({
-            'patient_id': patient_id,
-            'report_type': 'blood',
-            'uploaded_by': session['user_id'],
-            'file_path': rel_path,
-            'timestamp': datetime.utcnow()
+        # 3) Handle PDF upload
+        if not pdf_file or not pdf_file.filename:
+            return jsonify({'error': 'Blood report PDF is required'}), 400
+
+        if not validate_pdf(pdf_file):
+            return jsonify({'error': 'Uploaded file must be a valid PDF under 10 MB'}), 400
+
+        rel_pdf = save_upload(pdf_file, 'blood_reports')
+        updates['blood_report'] = rel_pdf
+        logs.append({
+            'report_type': 'blood_pdf',
+            'file_path': rel_pdf
         })
-        return jsonify({'message': 'Blood report uploaded successfully'})
 
-    return render_template('upload_blood_report.html')
+        # 4) Save notes
+        updates['blood_notes'] = blood_notes
+
+        # 5) Gather all test inputs into a dict
+        #    We assume any form field not 'patientId', 'bloodNotes', 'reportFile'
+        #    is a numeric test value.
+        blood_results = {}
+        for key, val in request.form.items():
+            if key in ('patientId', 'bloodNotes'):
+                continue
+            # Attempt numeric parse; if fails, skip
+            try:
+                num = float(val)
+                blood_results[key] = num
+            except (ValueError, TypeError):
+                continue
+
+        if blood_results:
+            updates['blood_results'] = blood_results
+
+        # 6) Apply updates to patient document
+        if updates:
+            db.patients.update_one(
+                {'patient_id': patient_id},
+                {'$set': updates}
+            )
+
+        # 7) Log all actions
+        for entry in logs:
+            db.reports_log.insert_one({
+                'patient_id': patient_id,
+                'uploaded_by': session['user_id'],
+                'timestamp': datetime.utcnow(),
+                **entry
+            })
+
+        return jsonify({'message': 'Blood report and data saved successfully'})
+
+    # GET: render form (you may also pass existing patient data for preview)
+    return render_template('upload_blood_report.html', patient_data=None)
 
 
 @app.route('/generate_summary', methods=['POST'])
