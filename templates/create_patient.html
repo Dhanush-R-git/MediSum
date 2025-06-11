@@ -2,48 +2,105 @@
 {% block title %}Create Patient{% endblock %}
 
 {% block main_content %}
-<div class="max-w-xl mx-auto bg-white shadow rounded-lg p-6">
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">New Patient Registration</h2>
+<div class="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl p-8">
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-2">
+      <svg class="h-8 w-8 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m0 6v1m0 6v1m-6-6h1m6 0h1m-6 6h1m6 0h1m-6-6h1m6 0h1" />
+      </svg>
+      <h2 class="text-2xl font-bold text-indigo-700">New Patient Registration</h2>
+    </div>
+    <p class="text-gray-600 text-sm bg-indigo-50 rounded-lg px-4 py-2 shadow mb-2">
+      Please fill out the form below to register a new patient. All fields are required. Make sure the contact details are accurate for future communication and record keeping.
+    </p>
+  </div>
   <form id="create_patient_form" method="POST" action="{{ url_for('create_patient') }}" class="space-y-4">
     <div>
-      <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+      <label for="name" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+        Full Name
+        <button type="button" onclick="showInfo('name-info')" tabindex="-1" class="ml-1 focus:outline-none">
+          <svg class="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" fill="white"/>
+            <text x="10" y="15" text-anchor="middle" font-size="12" fill="currentColor" font-family="Arial" dy="0" dominant-baseline="middle">i</text>
+          </svg>
+        </button>
+      </label>
+      <span id="name-info" class="hidden text-xs text-gray-500 bg-indigo-50 rounded px-2 py-1 mt-1 block">Use the patient's full legal name as it appears on official documents.</span>
       <input type="text" name="name" id="name" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+             class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="dob" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+          Date of Birth
+          <button type="button" onclick="showInfo('dob-info')" tabindex="-1" class="ml-1 focus:outline-none">
+            <svg class="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" fill="white"/>
+              <text x="10" y="15" text-anchor="middle" font-size="12" fill="currentColor" font-family="Arial" dy="0" dominant-baseline="middle">i</text>
+            </svg>
+          </button>
+        </label>
+        <span id="dob-info" class="hidden text-xs text-gray-500 bg-indigo-50 rounded px-2 py-1 mt-1 block">Date of birth is required for accurate identification and age-based care.</span>
+        <input type="date" name="dob" id="dob" required
+               class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
+      </div>
+      <div>
+        <label for="sex" class="block text-sm font-medium text-gray-700">Sex</label>
+        <select name="sex" id="sex" required
+                class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Transgender">Transgender</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
     </div>
     <div>
-      <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-      <input type="date" name="dob" id="dob" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-    </div>
-    <div>
-      <label for="sex" class="block text-sm font-medium text-gray-700">Sex</label>
-      <select name="sex" id="sex" required
-              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-        <option value="">Select</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Transgender">Transgender</option>
-        <option value="Other">Other</option>
-      </select>
-    </div>
-    <div>
-      <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+      <label for="email" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+        Email
+        <button type="button" onclick="showInfo('email-info')" tabindex="-1" class="ml-1 focus:outline-none">
+          <svg class="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" fill="white"/>
+            <text x="10" y="15" text-anchor="middle" font-size="12" fill="currentColor" font-family="Arial" dy="0" dominant-baseline="middle">i</text>
+          </svg>
+        </button>
+      </label>
+      <span id="email-info" class="hidden text-xs text-gray-500 bg-indigo-50 rounded px-2 py-1 mt-1 block">Phone and email will be used for appointment reminders and notifications.</span>
       <input type="email" name="email" id="email" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+             class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
     </div>
     <div>
-      <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+      <label for="phone" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+        Phone
+        <button type="button" onclick="showInfo('phone-info')" tabindex="-1" class="ml-1 focus:outline-none">
+          <svg class="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" fill="white"/>
+            <text x="10" y="15" text-anchor="middle" font-size="12" fill="currentColor" font-family="Arial" dy="0" dominant-baseline="middle">i</text>
+          </svg>
+        </button>
+      </label>
+      <span id="phone-info" class="hidden text-xs text-gray-500 bg-indigo-50 rounded px-2 py-1 mt-1 block">Phone and email will be used for appointment reminders and notifications.</span>
       <input type="tel" name="phone" id="phone" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+             class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
     </div>
     <div>
-      <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+      <label for="address" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
+        Address
+        <button type="button" onclick="showInfo('address-info')" tabindex="-1" class="ml-1 focus:outline-none">
+          <svg class="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" fill="white"/>
+            <text x="10" y="15" text-anchor="middle" font-size="12" fill="currentColor" font-family="Arial" dy="0" dominant-baseline="middle">i</text>
+          </svg>
+        </button>
+      </label>
+      <span id="address-info" class="hidden text-xs text-gray-500 bg-indigo-50 rounded px-2 py-1 mt-1 block">Address should include street, city, and postal code.</span>
       <textarea name="address" id="address" rows="2" required
-                class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"></textarea>
+                class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm"></textarea>
     </div>
     <div class="flex justify-end">
       <button type="submit"
-              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
+              class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition">
         Create Patient
       </button>
     </div>
@@ -51,6 +108,18 @@
   </form>
 </div>
 
+<script>
+function showInfo(id) {
+  // Hide all info spans first
+  document.querySelectorAll('span[id$="-info"]').forEach(el => el.classList.add('hidden'));
+  // Show the selected one
+  document.getElementById(id).classList.remove('hidden');
+  // Hide after 4 seconds
+  setTimeout(() => {
+    document.getElementById(id).classList.add('hidden');
+  }, 4000);
+}
+</script>
 {% endblock %}
 
 {% block scripts %}

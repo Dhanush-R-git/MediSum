@@ -23,42 +23,42 @@
       <!-- Logo / Home Icon -->
       <a href="{{ url_for('dashboard') }}" class="mb-6">
         <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo" class="h-8 w-8">
-        <hr class="w-10 border-t-2 border-black mb-6" />
+        <hr class="w-10 border-t-2 border-white mb-6"/>
         <div class="h-8 w-8 bg-indigo-500 rounded-full flex items-center justify-center">
           <span class="text-white font-bold text-lg">P</span>
         </div>
-        <hr class="w-10 border-t-2 border-black mb-6 justify-center"/>
+        <!--<hr class="w-10 border-t-2 border-white mb-6 justify-center"/>-->
       </a>
       <!-- Sidebar Icons (Overview, Care Mgmt, Documents, Scheduling, Encounters) -->
       <nav class="flex-1 flex flex-col items-center space-y-6">
         <!-- Overview (Home) -->
         <button id="tab-overview-btn" class="sidebar-icon active" data-target="overview">
           <span class="text-2xl">🏠</span>
-          <hr class="w-10 border-t-2 border-green mb-6"/>
+          <hr class="w-10 border-t-2 border-white mb-6"/>
         </button>
 
         <!-- Care Management -->
         <button id="tab-care-btn" class="sidebar-icon" data-target="caremgmt">
           <span class="text-2xl">❤️</span>
-          <hr class="w-10 border-t-2 border-black mb-6" />
+          <hr class="w-10 border-t-2 border-white mb-6" />
         </button>
 
         <!-- Documents -->
         <button id="tab-docs-btn" class="sidebar-icon" data-target="documents">
           <span class="text-2xl">📄</span>
-          <hr class="w-10 border-t-2 border-black mb-6" />
+          <hr class="w-10 border-t-2 border-white mb-6" />
         </button>
 
         <!-- Scheduling -->
         <button id="tab-schedule-btn" class="sidebar-icon" data-target="scheduling">
           <span class="text-2xl">📆</span>
-          <hr class="w-10 border-t-2 border-black mb-6" />
+          <hr class="w-10 border-t-2 border-white mb-6" />
         </button>
 
         <!-- Encounters -->
         <button id="tab-encounters-btn" class="sidebar-icon" data-target="encounters">
           <span class="text-2xl">👥</span>
-          <hr class="w-10 border-t-2 border-black mb-6" />
+          <hr class="w-10 border-t-2 border-white mb-6" />
         </button>
       </nav>
       <!-- Logout Icon at bottom -->

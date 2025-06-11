@@ -3,30 +3,35 @@
 {% block title %}Upload Scan Report{% endblock %}
 
 {% block main_content %}
-  <div class="max-w-5xl mx-auto bg-white shadow rounded-lg p-6">
-    <h2 class="text-2xl font-semibold text-gray-700 mb-6">Upload / Verify Scan Report</h2>
+  <div class="max-w-5xl mx-auto bg-purple-100 shadow-2xl rounded-2xl p-8">
+    <h4 class="text-xl font-bold text-indigo-700 mb-8 flex items-center gap-2 bg-gray-50 rounded-lg shadow-sm px-4 py-2">
+      <svg class="h-8 w-8 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2a4 4 0 014-4h6m-6 0V7a4 4 0 00-4-4H5a4 4 0 00-4 4v10a4 4 0 004 4h6a4 4 0 004-4z"/>
+      </svg>
+      Upload / Verify Radiology Reports
+    </h4>
 
-    <!-- Flex Container: Left = Existing PDF Preview, Right = Form Inputs -->
-    <div class="flex flex-col lg:flex-row gap-6">
-      
-      <!-- ────────────────────────────────────────────────────────────────────────
-             LEFT COLUMN: Verify / Preview Previously Uploaded Scan PDF
-           ──────────────────────────────────────────────────────────────────────── -->
-      <div class="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-4">
-        <h3 class="text-lg font-medium text-gray-700 mb-4">Preview</h3>
-
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- LEFT COLUMN: Preview -->
+      <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+          <svg class="h-6 w-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          Preview
+        </h3>
         <!-- PDF Preview -->
-        <div id="pdfPreviewContainer" class="aspect-w-3 aspect-h-4 border border-gray-300 rounded-lg overflow-hidden hidden mb-4 relative">
+        <div id="pdfPreviewContainer" class="aspect-w-3 aspect-h-4 border-2 border-indigo-200 rounded-lg overflow-hidden hidden mb-4 relative transition-shadow hover:shadow-lg">
           <iframe id="pdfPreview" class="w-full h-full" frameborder="0"></iframe>
           <button id="expandPdf" type="button"
-            class="absolute top-2 right-2 bg-white bg-opacity-80 hover:bg-opacity-100 border border-gray-300 rounded-full p-2 shadow text-gray-700"
+            class="absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-indigo-100 border border-indigo-300 rounded-full p-2 shadow text-indigo-700 transition"
             title="Expand PDF">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" />
             </svg>
           </button>
         </div>
-        <p id="noPdfMsg" class="text-gray-500">No PDF selected.</p>
+        <p id="noPdfMsg" class="text-gray-400 italic text-center mb-4">No PDF selected.</p>
 
         <!-- Image Thumbnails -->
         <div class="relative">
@@ -34,34 +39,35 @@
             <!-- JS will inject <img> tags here -->
           </div>
           <button id="expandImages" type="button"
-            class="absolute top-2 right-2 bg-white bg-opacity-80 hover:bg-opacity-100 border border-gray-300 rounded-full p-2 shadow text-gray-700"
+            class="absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-indigo-100 border border-indigo-300 rounded-full p-2 shadow text-indigo-700 transition"
             title="Expand Images">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2" />
             </svg>
           </button>
         </div>
-        <p id="noImgMsg" class="text-gray-500 mt-4">No images selected.</p>
+        <p id="noImgMsg" class="text-gray-400 italic text-center mt-4">No images selected.</p>
       </div>
       <!-- end LEFT COLUMN -->
 
-
-      <!-- ────────────────────────────────────────────────────────────────────────
-             RIGHT COLUMN: Form to Upload New Scan + Notes + Images
-           ──────────────────────────────────────────────────────────────────────── -->
-      <div class="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-4">
-        <h3 class="text-lg font-medium text-gray-700 mb-4">Add / Update Scan Info</h3>
-
+      <!-- RIGHT COLUMN: Upload Form -->
+      <div class="flex-1 bg-gray-50 rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+          <svg class="h-6 w-6 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add / Update Radiology Info
+        </h3>
         <form
           id="upload_scan_form"
           method="POST"
           action="{{ url_for('upload_scan_report') }}"
           enctype="multipart/form-data"
-          class="space-y-4"
+          class="space-y-6"
         >
           <!-- Patient ID -->
           <div>
-            <label for="patientId" class="block text-sm font-medium text-gray-700">
+            <label for="patientId" class="block text-sm font-semibold text-indigo-700 mb-1">
               Patient ID
             </label>
             <input
@@ -70,14 +76,14 @@
               id="patientId"
               value="{{ patient_data.patient_id if patient_data else '' }}"
               required
-              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
               placeholder="e.g. PAT0001"
             />
           </div>
 
           <!-- Scan PDF (New Upload) -->
           <div>
-            <label for="reportFile" class="block text-sm font-medium text-gray-700">
+            <label for="reportFile" class="block text-sm font-semibold text-indigo-700 mb-1">
               Scan Report (PDF)
             </label>
             <input
@@ -85,28 +91,28 @@
               name="reportFile"
               id="reportFile"
               accept=".pdf"
-              class="mt-1 block w-full text-sm text-gray-600"
+              class="mt-1 block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
             <p class="mt-1 text-gray-500 text-xs">Upload a PDF file if you want to replace / add to existing scan.</p>
           </div>
 
           <!-- Scan Notes (Textarea) -->
           <div>
-            <label for="scanNotes" class="block text-sm font-medium text-gray-700">
+            <label for="scanNotes" class="block text-sm font-semibold text-indigo-700 mb-1">
               Scan Notes
             </label>
             <textarea
               name="scanNotes"
               id="scanNotes"
               rows="4"
-              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
               placeholder="Enter any scanning observations or radiologist notes here…"
             >{{ patient_data.scan_notes if patient_data and patient_data.scan_notes else '' }}</textarea>
           </div>
 
           <!-- Scan Images (Multiple) -->
           <div>
-            <label for="imageFiles" class="block text-sm font-medium text-gray-700">
+            <label for="imageFiles" class="block text-sm font-semibold text-indigo-700 mb-1">
               Scan Image Files (JPEG/PNG)
             </label>
             <input
@@ -115,7 +121,7 @@
               id="imageFiles"
               accept=".jpg,.jpeg,.png"
               multiple
-              class="mt-1 block w-full text-sm text-gray-600"
+              class="mt-1 block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
             <p class="mt-1 text-gray-500 text-xs">Select one or more image files (e.g., DICOM previews, screenshots).</p>
           </div>
@@ -124,8 +130,11 @@
           <div class="flex justify-end">
             <button
               type="submit"
-              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600"
+              class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
             >
+              <svg class="h-5 w-5 inline-block mr-1 -mt-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
               Save Scan Data
             </button>
           </div>
@@ -135,16 +144,14 @@
         </form>
       </div>
       <!-- end RIGHT COLUMN -->
-
     </div>
     <!-- end FLEX CONTAINER -->
-
   </div>
 
   <!-- Modal for expanded PDF/Image preview -->
-  <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-auto relative" id="modalContentWrapper">
-      <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold z-10" title="Close">&times;</button>
+  <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden transition-opacity duration-200">
+    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto relative animate-fade-in" id="modalContentWrapper">
+      <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold z-10 transition" title="Close">&times;</button>
       <div id="modalContent" class="p-4 flex justify-center items-center"></div>
     </div>
   </div>
@@ -263,23 +270,7 @@
     modalBody.innerHTML = `<iframe src="${src}" class="w-screen h-screen" frameborder="0"></iframe>`;
     modal.classList.remove('hidden');
   });
-/*
-  // Expand PDF
-  expandPdfBtn.addEventListener('click', () => {
-    const src = pdfPreview.src;
-    if (!src) return;
-    modalBody.innerHTML = `<iframe src="${src}" class="w-screen h-screen" frameborder="0"></iframe>`;
-    modal.classList.remove('hidden');
-  });
-
-  // Expand PDF
-  document.getElementById('expandPdf').addEventListener('click', () => {
-    const src = pdfPreview.src;
-    if (!src) return;
-    modalBody.innerHTML = `<iframe src="${src}" class="w-screen h-screen" frameborder="0"></iframe>`;
-    modal.classList.remove('hidden');
-  });
-*/
+  
   // Expand Images
   document.getElementById('expandImages').addEventListener('click', () => {
     const imgs = Array.from(document.querySelectorAll('#imgPreviewContainer img'));
