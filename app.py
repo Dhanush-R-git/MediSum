@@ -1,6 +1,6 @@
 # app.py imports
 
-from flask import Flask, request, render_template, redirect, url_for, session, jsonify, send_file, abort
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify, send_file, abort, current_app
 from pymongo import MongoClient
 from datetime import datetime
 import os, logging, smtplib
@@ -8,6 +8,7 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 from utils.security import hash_password, check_password, login_required, role_required
 from utils.file_utils import validate_pdf, save_upload
+from progress_report import generate_progress_report
 from werkzeug.utils import secure_filename
 
 # from langchain imports libraries to keep the summary‐generation pipeline
@@ -782,33 +783,13 @@ def rad_upload_scan_report():
 @app.route('/coord/upload_progress_report', methods=['GET', 'POST'])
 @role_required('coordinator')
 def coord_upload_progress_report():
-    """
-    Coordinator only: upload progress/consultation reports.
-    Implementation identical to blood/scan but with a separate folder.
-    """
     if request.method == 'POST':
-        patient_id = request.form.get('patientId').strip()
-        report_file = request.files.get('reportFile')
-        if not patient_id or not report_file:
-            return jsonify({'error': 'Patient ID and report file required'}), 400
+        pid      = request.form.get('patientId', '').strip()
+        rpt_type = request.form.get('reportType', '').strip()
+        file     = request.files.get('reportFile')
 
-        patient = db.patients.find_one({'patient_id': patient_id})
-        if not patient:
-            return jsonify({'error': 'Patient ID not found'}), 404
-
-        if not validate_pdf(report_file):
-            return jsonify({'error': 'Uploaded file must be a valid PDF'}), 400
-
-        rel_path = save_upload(report_file, 'progress_reports')
-        db.patients.update_one({'patient_id': patient_id}, {'$set': {'progress_report': rel_path}})
-        db.reports_log.insert_one({
-            'patient_id': patient_id,
-            'report_type': 'progress',
-            'uploaded_by': session['user_id'],
-            'file_path': rel_path,
-            'timestamp': datetime.utcnow()
-        })
-        return jsonify({'message': 'Progress report uploaded successfully'})
+        result, status = generate_progress_report(pid, rpt_type, request.form, file)
+        return jsonify(result), status
 
     return render_template('upload_progress_report.html')
 

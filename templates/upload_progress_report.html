@@ -2,99 +2,520 @@
 {% block title %}Upload Progress Report{% endblock %}
 
 {% block main_content %}
-<div class="max-w-lg mx-auto bg-white shadow rounded-lg p-6">
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Progress Report</h2>
-  <form id="upload_doc_form" method="POST" action="{{ url_for('coord_upload_progress_report') }}" enctype="multipart/form-data" class="space-y-4">
-    <div>
-      <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
-      <input type="text" name="patientId" id="patientId" required
-             class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+<div class="max-w-3xl mx-auto bg-white shadow-2xl rounded-2xl p-8">
+  <h2 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2 bg-indigo-50 rounded-lg shadow px-4 py-2">
+    <svg class="h-7 w-7 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Create & Upload Progress Report
+  </h2>
+  <form id="upload_doc_form" method="POST"
+        action="{{ url_for('coord_upload_progress_report') }}"
+        enctype="multipart/form-data" class="space-y-8">
+
+    <!-- Patient ID & Type -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label for="patientId" class="block text-sm font-semibold text-indigo-700 mb-1">Patient ID</label>
+        <input type="text" name="patientId" id="patientId" required
+               class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm" />
+      </div>
+      <div>
+        <label for="reportType" class="block text-sm font-semibold text-indigo-700 mb-1">
+          Note Format
+        </label>
+        <select id="reportType" name="reportType" required
+                class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
+          <option value="soap">1. SOAP</option>
+          <option value="dap">2. DAP</option>
+          <option value="birp">3. BIRP</option>
+          <option value="narrative">4. Narrative</option>
+          <option value="session">5. Session/Contact Notes</option>
+          <option value="summary">6. Treatment Summary</option>
+          <option value="daily">7. Daily Progress Notes</option>
+          <option value="shift">8. Change-of-Shift Reports</option>
+          <option value="admission">9. Admission Notes</option>
+          <option value="case">10. Case Reports</option>
+          <option value="supervision">11. Supervision Notes</option>
+        </select>
+      </div>
     </div>
+
+    <!-- 1) SOAP -->
+    <fieldset id="fs-soap" class="space-y-6 border border-indigo-100 rounded-lg p-6 shadow-sm">
+      <legend class="px-2 text-lg font-semibold text-indigo-700">🩺 SOAP Note</legend>
+
+      <!-- Subjective -->
+      <div class="space-y-4">
+        <h4 class="font-medium text-indigo-600">Subjective (S)</h4>
+        <div class="grid md:grid-cols-2 gap-4">
+
+          <!-- Chief Complaint -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Chief Complaint (CC)</label>
+            <input
+              type="text" name="soap_cc"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="e.g. Chest pain" />
+          </div>
+
+          <!-- Onset -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Onset</label>
+            <input
+              type="datetime-local" name="soap_onset"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2" />
+          </div>
+
+          <!-- Duration -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Duration</label>
+            <div class="flex space-x-2">
+              <input
+                type="number" step="0.1" name="soap_duration_value"
+                class="mt-1 w-1/2 border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+                placeholder="e.g. 2" />
+              <select name="soap_duration_unit"
+                      class="mt-1 w-1/2 border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2">
+                <option>hours</option>
+                <option>days</option>
+                <option>weeks</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Quality -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Quality</label>
+            <input
+              type="text" name="soap_quality"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="e.g. Sharp, dull, throbbing" />
+          </div>
+
+          <!-- Severity -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Severity (0–10)</label>
+            <input
+              type="range" name="soap_severity" min="0" max="10" step="1"
+              class="mt-3 w-full" />
+            <div class="text-sm text-gray-600 mt-1">Value: <span id="sevVal">5</span></div>
+          </div>
+
+          <!-- Location -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Location/Radiation</label>
+            <input
+              type="text" name="soap_location"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="e.g. Left chest radiating to left arm" />
+          </div>
+
+        </div>
+
+        <!-- Pertinent History & Meds/Allergies -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Pertinent Medical History</label>
+            <input
+              type="text" name="soap_history"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="e.g. HTN, T2DM, cholecystectomy" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Medications & Allergies</label>
+            <div id="meds-allergies-list" class="space-y-2">
+              <div class="flex gap-2">
+                <input type="text" name="soap_meds[]" class="w-1/2 border border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" placeholder="Medication (e.g. Lisinopril 10mg q.d.)" />
+                <input type="text" name="soap_allergies[]" class="w-1/2 border border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" placeholder="Allergy (e.g. Penicillin)" />
+                <button type="button" class="add-row bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-full px-2 py-1 text-lg font-bold" title="Add row">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review of Systems -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Review of Systems (ROS)</label>
+          <textarea
+            name="soap_ros" rows="2"
+            class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+            placeholder="CVS: no palpitations; Resp: mild cough; GI: no nausea"></textarea>
+        </div>
+      </div>
+
+      <!-- Objective -->
+      <div class="space-y-4">
+        <h4 class="font-medium text-indigo-600">Objective (O)</h4>
+        <div class="grid md:grid-cols-3 gap-4">
+
+          <!-- Temperature -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Temp (°C)</label>
+            <input
+              type="number" step="0.1" name="soap_temp"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="37.2" />
+          </div>
+
+          <!-- Blood Pressure -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">BP (mmHg)</label>
+            <input
+              type="text" name="soap_bp"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="120/80" />
+          </div>
+
+          <!-- Pulse -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Pulse (bpm)</label>
+            <input
+              type="number" name="soap_pulse"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="78" />
+          </div>
+
+          <!-- Respiration -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Resp Rate (rpm)</label>
+            <input
+              type="number" name="soap_resp"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="16" />
+          </div>
+
+          <!-- SpO₂ -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">SpO₂ (%)</label>
+            <input
+              type="number" name="soap_spo2"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="98" />
+          </div>
+
+          <!-- Weight -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+            <input
+              type="number" step="0.1" name="soap_weight"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="72.5" />
+          </div>
+        </div>
+
+        <!-- Physical Exam & Diagnostics -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Physical Exam Findings</label>
+          <textarea
+            name="soap_exam" rows="2"
+            class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+            placeholder="Resp: clear bilat; Cardio: S1/S2 normal"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Diagnostics / Labs</label>
+          <input
+            type="text" name="soap_diagnostics"
+            class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+            placeholder="CBC: WBC 7.0 x10⁹/L; CXR: no infiltrates" />
+        </div>
+      </div>
+
+      <!-- Assessment -->
+      <div class="space-y-2">
+        <h4 class="font-medium text-indigo-600">Assessment (A)</h4>
+        <textarea
+          name="soap_assessment" rows="4"
+          class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+          placeholder="1. Acute bronchitis likely; 2. Rule out pneumonia"></textarea>
+      </div>
+
+      <!-- Plan -->
+      <div class="space-y-4">
+        <h4 class="font-medium text-indigo-600">Plan (P)</h4>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Diagnostic Plan</label>
+            <input
+              type="text" name="soap_plan_diag"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="Order BMP, refer to pulm consult" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Therapeutic Plan</label>
+            <input
+              type="text" name="soap_plan_tx"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="Start azithromycin 500 mg daily ×5 d" />
+          </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Patient Education</label>
+            <textarea
+              name="soap_plan_edu" rows="2"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="Advise rest, hydration, avoid smoke exposure"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Follow-Up</label>
+            <input
+              type="text" name="soap_plan_fu"
+              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              placeholder="Follow up in 7 days or sooner if dyspnea worsens" />
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- 2) DAP -->
+    <fieldset id="fs-dap" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">DAP</legend>
+      <div>
+        <label class="block text-sm">Data</label>
+        <textarea name="dap_data" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Assessment</label>
+        <textarea name="dap_assessment" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Plan</label>
+        <textarea name="dap_plan" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 3) BIRP -->
+    <fieldset id="fs-birp" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">BIRP</legend>
+      <div>
+        <label class="block text-sm">Behavioral</label>
+        <textarea name="birp_behavioral" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Intervention</label>
+        <textarea name="birp_intervention" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Response</label>
+        <textarea name="birp_response" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Plan</label>
+        <textarea name="birp_plan" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 4) Narrative -->
+    <fieldset id="fs-narrative" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Narrative</legend>
+      <div>
+        <label class="block text-sm">Freeform Note</label>
+        <textarea name="narrative_text" rows="6"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 5) Session/Contact -->
+    <fieldset id="fs-session" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Session / Contact Notes</legend>
+      <div>
+        <label class="block text-sm">Date & Time</label>
+        <input type="datetime-local" name="session_datetime"
+               class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">Notes</label>
+        <textarea name="session_notes" rows="4"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 6) Treatment Summary -->
+    <fieldset id="fs-summary" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Treatment Summary</legend>
+      <div>
+        <label class="block text-sm">Summary</label>
+        <textarea name="summary_text" rows="6"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 7) Daily Progress -->
+    <fieldset id="fs-daily" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Daily Progress Notes</legend>
+      <div>
+        <label class="block text-sm">Date</label>
+        <input type="date" name="daily_date"
+               class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">Notes</label>
+        <textarea name="daily_notes" rows="4"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 8) Change-of-Shift -->
+    <fieldset id="fs-shift" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Change-of-Shift Report</legend>
+      <div>
+        <label class="block text-sm">From Shift</label>
+        <input type="text" name="shift_from" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">To Shift</label>
+        <input type="text" name="shift_to" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">Handoff Notes</label>
+        <textarea name="shift_notes" rows="4"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 9) Admission Notes -->
+    <fieldset id="fs-admission" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Admission Notes</legend>
+      <div>
+        <label class="block text-sm">Admission Date</label>
+        <input type="date" name="admission_date" class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">Initial Assessment</label>
+        <textarea name="admission_assessment" rows="4"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 10) Case Reports -->
+    <fieldset id="fs-case" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Case Report</legend>
+      <div>
+        <label class="block text-sm">Background</label>
+        <textarea name="case_background" rows="3"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Presentation</label>
+        <textarea name="case_presentation" rows="3"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Management & Outcome</label>
+        <textarea name="case_management" rows="3"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm">Conclusion</label>
+        <textarea name="case_conclusion" rows="3"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- 11) Supervision -->
+    <fieldset id="fs-supervision" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
+      <legend class="font-medium text-indigo-700">Supervision Notes</legend>
+      <div>
+        <label class="block text-sm">Date</label>
+        <input type="date" name="supervision_date"
+               class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">Supervisor</label>
+        <input type="text" name="supervisor_name"
+               class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+      </div>
+      <div>
+        <label class="block text-sm">Notes</label>
+        <textarea name="supervision_notes" rows="4"
+                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+      </div>
+    </fieldset>
+
+    <!-- Final: PDF upload button -->
     <div>
-      <label for="reportFile" class="block text-sm font-medium text-gray-700">Report (PDF)</label>
-      <input type="file" name="reportFile" id="reportFile" accept=".pdf" required
-             class="mt-1 block w-full text-sm text-gray-600">
+      <label for="reportFile" class="block text-sm font-semibold text-indigo-700 mb-1">Attach PDF (if any)</label>
+      <input type="file" name="reportFile" id="reportFile" accept=".pdf"
+             class="mt-1 block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
     </div>
+
     <div class="flex justify-end">
       <button type="submit"
-              class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-md hover:bg-indigo-600">
-        Upload
+              class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition">
+        Generate & Upload
       </button>
     </div>
-    <p id="upload_msg" class="text-sm mt-2 hidden"></p>
+    <p id="upload_msg" class="mt-2 text-sm hidden"></p>
   </form>
-</div>
-
-<!-- ───────────────────────────────────────────────────────────────────────────
-     Quick Comparison Table
-────────────────────────────────────────────────────────────────────────── -->
-<div class="max-w-5xl mx-auto mt-12 bg-white shadow rounded-lg p-6">
-  <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Comparison of Progress Note Types</h3>
-  <div class="overflow-x-auto">
-    <table class="min-w-full text-sm text-left text-gray-700 border">
-      <thead>
-        <tr class="bg-indigo-50">
-          <th class="px-3 py-2 font-medium border-b">Format / Note Type</th>
-          <th class="px-3 py-2 font-medium border-b">Setting / Purpose</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white">
-        {% set rows = [
-          ["SOAP (and variants)", "General medical, nursing, therapy documentation"],
-          ["DAP, BIRP, PIE, DAR/DART", "Behavioral health, structured nursing notes"],
-          ["Narrative", "Flexible prose-style notes"],
-          ["Process Notes", "Private therapist reflections"],
-          ["Session/Contact/Event Notes", "Mental health sessions and brief encounters"],
-          ["Supervision Notes", "Between provider and supervisor"],
-          ["Treatment Summary", "Higher-level care summaries"],
-          ["Daily Progress Notes", "Inpatient ongoing records"],
-          ["Change-of-Shift Reports", "Shift-to-shift handoff"],
-          ["Admission Notes", "Initial patient intake"],
-          ["Case Reports", "Detailed academic/clinical case studies"]
-        ] %}
-        {% for r in rows %}
-        <tr>
-          <td class="px-3 py-2 border-b">{{ r[0] }}</td>
-          <td class="px-3 py-2 border-b">{{ r[1] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-2">✅ Tips for Effective Progress Reports</h3>
-  <ul class="list-disc list-inside text-gray-700 space-y-1">
-    <li>Use a structured format (like SOAP or DAP) to keep notes concise and clinically focused.</li>
-    <li>Differentiate subjective vs. objective data clearly.</li>
-    <li>Ensure continuity: each note should tie into the previous and inform the next.</li>
-    <li>Tailor format to context—mental health, nursing, medical rounds, or research.</li>
-    <li>Stick to professional, factual language; process notes (therapists only) may include reflection.</li>
-  </ul>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const response = await fetch("{{ url_for('coord_upload_progress_report') }}", {
-      method: "POST",
-      body: formData
+  // Fieldset show/hide logic
+  const fieldsets = {
+    soap: "fs-soap",
+    dap: "fs-dap",
+    birp: "fs-birp",
+    narrative: "fs-narrative",
+    session: "fs-session",
+    summary: "fs-summary",
+    daily: "fs-daily",
+    shift: "fs-shift",
+    admission: "fs-admission",
+    case: "fs-case",
+    supervision: "fs-supervision"
+  };
+    // Update severity display
+  const sev = document.querySelector('input[name="soap_severity"]');
+  const sevVal = document.getElementById('sevVal');
+  sev.addEventListener('input', () => sevVal.textContent = sev.value);
+  function onTypeChange() {
+    const sel = document.getElementById("reportType").value;
+    Object.values(fieldsets).forEach(id => document.getElementById(id).classList.add("hidden"));
+    if (fieldsets[sel]) document.getElementById(fieldsets[sel]).classList.remove("hidden");
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("reportType").addEventListener("change", onTypeChange);
+    onTypeChange();
+
+    document.getElementById('upload_doc_form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fm = new FormData(e.target);
+      const resp = await fetch(e.target.action, { method: 'POST', body: fm });
+      const data = await resp.json();
+      const msg = document.getElementById('upload_msg');
+      msg.classList.remove('hidden');
+      if (resp.ok) {
+        msg.className = 'mt-2 text-green-600';
+        msg.textContent = data.message;
+        e.target.reset();
+      } else {
+        msg.className = 'mt-2 text-red-600';
+        msg.textContent = data.error;
+      }
     });
-    const data = await response.json();
-    const msgEl = document.getElementById('upload_msg');
-    msgEl.classList.remove('hidden');
-    if (response.ok) {
-      msgEl.classList.remove('text-red-600');
-      msgEl.classList.add('text-green-600');
-      msgEl.innerText = data.message;
-      this.reset();
-    } else {
-      msgEl.classList.remove('text-green-600');
-      msgEl.classList.add('text-red-600');
-      msgEl.innerText = data.error || "Error uploading file.";
+  });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const list = document.getElementById('meds-allergies-list');
+  list.addEventListener('click', function(e) {
+    if (e.target.classList.contains('add-row')) {
+      const row = document.createElement('div');
+      row.className = 'flex gap-2 mt-2';
+      row.innerHTML = `
+        <input type="text" name="soap_meds[]" class="w-1/2 border border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" placeholder="Medication (e.g. Metformin 500mg)" />
+        <input type="text" name="soap_allergies[]" class="w-1/2 border border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" placeholder="Allergy (e.g. None)" />
+        <button type="button" class="remove-row bg-red-100 hover:bg-red-200 text-red-700 rounded-full px-2 py-1 text-lg font-bold" title="Remove row">&minus;</button>
+      `;
+      list.appendChild(row);
+    }
+    if (e.target.classList.contains('remove-row')) {
+      e.target.parentElement.remove();
     }
   });
+});
 </script>
 {% endblock %}
