@@ -245,6 +245,21 @@ def load_patient(patient_id):
     # 3. Fetch expert list for “send to expert” dropdown
     experts = list(db.experts.find({}, {'_id': 0, 'name': 1, 'email': 1}))
 
+    # 4. Fetch recent progress report history
+    progress_logs = list(db.reports_log.find(
+        {'patient_id': patient_id, 'report_type': 'progress'}
+    ).sort('timestamp', -1).limit(5))
+
+    # Format for template
+    progress_history = [
+        {
+            'file_path': entry['file_path'],
+            'uploaded_by': entry.get('uploaded_by'),
+            'timestamp': entry['timestamp'].strftime('%Y-%m-%d %H:%M')
+        }
+        for entry in progress_logs
+    ]
+
     # 4. Prepare patient list for the right panel (same as before)
     all_patients = list(db.patients.find({}, {'_id': 0, 'patient_id': 1, 'name': 1, 'dob': 1}))
     patient_list = []
@@ -265,6 +280,7 @@ def load_patient(patient_id):
         actions_list=actions,
         quality_measures=quality_measures,
         experts=experts,
+        progress_history=progress_history,
     )
 
 

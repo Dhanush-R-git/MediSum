@@ -4,7 +4,7 @@
 {% block main_content %}
 <div class="max-w-lg mx-auto bg-white shadow rounded-lg p-6">
   <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Progress Report</h2>
-  <form id="upload_doc_form" method="POST" action="{{ url_for('upload_progress_report') }}" enctype="multipart/form-data" class="space-y-4">
+  <form id="upload_doc_form" method="POST" action="{{ url_for('coord_upload_progress_report') }}" enctype="multipart/form-data" class="space-y-4">
     <div>
       <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
       <input type="text" name="patientId" id="patientId" required
@@ -24,30 +24,77 @@
     <p id="upload_msg" class="text-sm mt-2 hidden"></p>
   </form>
 </div>
+
+<!-- ───────────────────────────────────────────────────────────────────────────
+     Quick Comparison Table
+────────────────────────────────────────────────────────────────────────── -->
+<div class="max-w-5xl mx-auto mt-12 bg-white shadow rounded-lg p-6">
+  <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Comparison of Progress Note Types</h3>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm text-left text-gray-700 border">
+      <thead>
+        <tr class="bg-indigo-50">
+          <th class="px-3 py-2 font-medium border-b">Format / Note Type</th>
+          <th class="px-3 py-2 font-medium border-b">Setting / Purpose</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white">
+        {% set rows = [
+          ["SOAP (and variants)", "General medical, nursing, therapy documentation"],
+          ["DAP, BIRP, PIE, DAR/DART", "Behavioral health, structured nursing notes"],
+          ["Narrative", "Flexible prose-style notes"],
+          ["Process Notes", "Private therapist reflections"],
+          ["Session/Contact/Event Notes", "Mental health sessions and brief encounters"],
+          ["Supervision Notes", "Between provider and supervisor"],
+          ["Treatment Summary", "Higher-level care summaries"],
+          ["Daily Progress Notes", "Inpatient ongoing records"],
+          ["Change-of-Shift Reports", "Shift-to-shift handoff"],
+          ["Admission Notes", "Initial patient intake"],
+          ["Case Reports", "Detailed academic/clinical case studies"]
+        ] %}
+        {% for r in rows %}
+        <tr>
+          <td class="px-3 py-2 border-b">{{ r[0] }}</td>
+          <td class="px-3 py-2 border-b">{{ r[1] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-2">✅ Tips for Effective Progress Reports</h3>
+  <ul class="list-disc list-inside text-gray-700 space-y-1">
+    <li>Use a structured format (like SOAP or DAP) to keep notes concise and clinically focused.</li>
+    <li>Differentiate subjective vs. objective data clearly.</li>
+    <li>Ensure continuity: each note should tie into the previous and inform the next.</li>
+    <li>Tailor format to context—mental health, nursing, medical rounds, or research.</li>
+    <li>Stick to professional, factual language; process notes (therapists only) may include reflection.</li>
+  </ul>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const formData = new FormData(this);
-  const response = await fetch("{{ url_for('upload_progress_report') }}", {
-    method: "POST",
-    body: formData
+  document.getElementById('upload_doc_form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const response = await fetch("{{ url_for('coord_upload_progress_report') }}", {
+      method: "POST",
+      body: formData
+    });
+    const data = await response.json();
+    const msgEl = document.getElementById('upload_msg');
+    msgEl.classList.remove('hidden');
+    if (response.ok) {
+      msgEl.classList.remove('text-red-600');
+      msgEl.classList.add('text-green-600');
+      msgEl.innerText = data.message;
+      this.reset();
+    } else {
+      msgEl.classList.remove('text-green-600');
+      msgEl.classList.add('text-red-600');
+      msgEl.innerText = data.error || "Error uploading file.";
+    }
   });
-  const data = await response.json();
-  const msgEl = document.getElementById('upload_msg');
-  msgEl.classList.remove('hidden');
-  if (response.ok) {
-    msgEl.classList.remove('text-red-600');
-    msgEl.classList.add('text-green-600');
-    msgEl.innerText = data.message;
-    this.reset();
-  } else {
-    msgEl.classList.remove('text-green-600');
-    msgEl.classList.add('text-red-600');
-    msgEl.innerText = data.error || "Error uploading file.";
-  }
-});
 </script>
 {% endblock %}
