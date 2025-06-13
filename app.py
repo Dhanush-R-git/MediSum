@@ -261,6 +261,20 @@ def load_patient(patient_id):
         for entry in progress_logs
     ]
 
+        # Fetch recent Daily Progress entries
+    daily_logs = list(db.reports_log.find(
+        {'patient_id': patient_id, 'progress_type': 'daily'}
+    ).sort('timestamp', -1).limit(5))
+
+    daily_history = [
+        {
+            'datetime': d['timestamp'].strftime('%Y-%m-%d %H:%M'),
+            'provider': d.get('progress_type') == 'daily' and d.get('uploaded_by'),
+            'file': d['file_path']
+        }
+        for d in daily_logs
+    ]
+
     # 4. Prepare patient list for the right panel (same as before)
     all_patients = list(db.patients.find({}, {'_id': 0, 'patient_id': 1, 'name': 1, 'dob': 1}))
     patient_list = []
@@ -282,6 +296,7 @@ def load_patient(patient_id):
         quality_measures=quality_measures,
         experts=experts,
         progress_history=progress_history,
+        daily_history=daily_history,
     )
 
 

@@ -82,8 +82,30 @@ def build_summary(form):
 
 def build_daily(form):
     lines = []
-    lines.append(f"Date: {form.get('daily_date')}")
-    lines.append(form.get('daily_notes', '') + "\n")
+    lines.append(f"Date/Time: {form.get('daily_datetime', '')}")
+    lines.append(f"Provider: {form.get('daily_provider', '')}\n")
+
+    lines.append("Subjective:")
+    lines.append(f"  {form.get('daily_subjective','')}\n")
+
+    lines.append("Objective:")
+    lines.append(f"  - Temp: {form.get('daily_temp','')} °C")
+    lines.append(f"  - BP: {form.get('daily_bp','')} mmHg")
+    lines.append(f"  - Pulse: {form.get('daily_pulse','')} bpm")
+    lines.append(f"  - Resp: {form.get('daily_resp','')} rpm")
+    lines.append(f"  - SpO₂: {form.get('daily_spo2','')} %")
+    lines.append(f"  - Intake/Output: {form.get('daily_io','')}")
+    lines.append(f"  - Exam: {form.get('daily_exam','')}")
+    lines.append(f"  - Labs/Imaging: {form.get('daily_labs','')}\n")
+
+    lines.append("Assessment:")
+    lines.append(f"  {form.get('daily_assessment','')}\n")
+
+    lines.append("Plan:")
+    lines.append(f"  - Diagnostics: {form.get('daily_plan_diag','')}")
+    lines.append(f"  - Treatment/Support: {form.get('daily_plan_tx','')}")
+    lines.append(f"  - Referrals/Discharge: {form.get('daily_plan_referral','')}\n")
+
     return "\n".join(lines)
 
 def build_shift(form):
