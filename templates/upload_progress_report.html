@@ -2,8 +2,8 @@
 {% block title %}Upload Progress Report{% endblock %}
 
 {% block main_content %}
-<div class="max-w-3xl mx-auto bg-white shadow-2xl rounded-2xl p-8">
-  <h2 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2 bg-indigo-50 rounded-lg shadow px-4 py-2">
+<div class="max-w-3xl mx-auto bg-purple-100 shadow-2xl rounded-2xl p-8">
+  <h2 class="text-xl font-bold text-indigo-700 mb-6 flex items-center gap-2 bg-gray-50 rounded-lg shadow px-4 py-2">
     <svg class="h-7 w-7 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
     </svg>
@@ -25,7 +25,7 @@
           Note Format
         </label>
         <select id="reportType" name="reportType" required
-                class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
+                class="mt-1 block w-full border border-indigo-300 rounded-lg px-3 py-2 font-extralight focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white shadow-sm">
           <option value="soap">1. SOAP</option>
           <option value="dap">2. DAP</option>
           <option value="birp">3. BIRP</option>
@@ -42,8 +42,8 @@
     </div>
 
     <!-- 1) SOAP -->
-    <fieldset id="fs-soap" class="space-y-6 border border-indigo-100 rounded-lg p-6 shadow-sm">
-      <legend class="px-2 text-lg font-semibold text-indigo-700">🩺 SOAP Note</legend>
+    <fieldset id="fs-soap" class="space-y-6 border border-indigo-300 bg-gray-100 rounded-lg p-6 shadow-sm">
+      <legend class="px-2 text-lg font-semibold text-indigo-700">🩺SOAP Notes</legend>
 
       <!-- Subjective -->
       <div class="space-y-4">
@@ -55,7 +55,7 @@
             <label class="block text-sm font-medium text-gray-700">Chief Complaint (CC)</label>
             <input
               type="text" name="soap_cc"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="e.g. Chest pain" />
           </div>
 
@@ -64,7 +64,7 @@
             <label class="block text-sm font-medium text-gray-700">Onset</label>
             <input
               type="datetime-local" name="soap_onset"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2" />
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2" />
           </div>
 
           <!-- Duration -->
@@ -73,10 +73,10 @@
             <div class="flex space-x-2">
               <input
                 type="number" step="0.1" name="soap_duration_value"
-                class="mt-1 w-1/2 border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+                class="mt-1 w-1/2 border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
                 placeholder="e.g. 2" />
               <select name="soap_duration_unit"
-                      class="mt-1 w-1/2 border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2">
+                      class="mt-1 w-1/2 border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2">
                 <option>hours</option>
                 <option>days</option>
                 <option>weeks</option>
@@ -89,7 +89,7 @@
             <label class="block text-sm font-medium text-gray-700">Quality</label>
             <input
               type="text" name="soap_quality"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="e.g. Sharp, dull, throbbing" />
           </div>
 
@@ -107,7 +107,7 @@
             <label class="block text-sm font-medium text-gray-700">Location/Radiation</label>
             <input
               type="text" name="soap_location"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="e.g. Left chest radiating to left arm" />
           </div>
 
@@ -119,7 +119,7 @@
             <label class="block text-sm font-medium text-gray-700">Pertinent Medical History</label>
             <input
               type="text" name="soap_history"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="e.g. HTN, T2DM, cholecystectomy" />
           </div>
           <div>
@@ -139,7 +139,7 @@
           <label class="block text-sm font-medium text-gray-700">Review of Systems (ROS)</label>
           <textarea
             name="soap_ros" rows="2"
-            class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+            class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
             placeholder="CVS: no palpitations; Resp: mild cough; GI: no nausea"></textarea>
         </div>
       </div>
@@ -154,7 +154,7 @@
             <label class="block text-sm font-medium text-gray-700">Temp (°C)</label>
             <input
               type="number" step="0.1" name="soap_temp"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="37.2" />
           </div>
 
@@ -163,7 +163,7 @@
             <label class="block text-sm font-medium text-gray-700">BP (mmHg)</label>
             <input
               type="text" name="soap_bp"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="120/80" />
           </div>
 
@@ -172,7 +172,7 @@
             <label class="block text-sm font-medium text-gray-700">Pulse (bpm)</label>
             <input
               type="number" name="soap_pulse"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="78" />
           </div>
 
@@ -181,7 +181,7 @@
             <label class="block text-sm font-medium text-gray-700">Resp Rate (rpm)</label>
             <input
               type="number" name="soap_resp"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="16" />
           </div>
 
@@ -190,7 +190,7 @@
             <label class="block text-sm font-medium text-gray-700">SpO₂ (%)</label>
             <input
               type="number" name="soap_spo2"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="98" />
           </div>
 
@@ -199,7 +199,7 @@
             <label class="block text-sm font-medium text-gray-700">Weight (kg)</label>
             <input
               type="number" step="0.1" name="soap_weight"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="72.5" />
           </div>
         </div>
@@ -209,14 +209,14 @@
           <label class="block text-sm font-medium text-gray-700">Physical Exam Findings</label>
           <textarea
             name="soap_exam" rows="2"
-            class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+            class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
             placeholder="Resp: clear bilat; Cardio: S1/S2 normal"></textarea>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700">Diagnostics / Labs</label>
           <input
             type="text" name="soap_diagnostics"
-            class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+            class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
             placeholder="CBC: WBC 7.0 x10⁹/L; CXR: no infiltrates" />
         </div>
       </div>
@@ -226,7 +226,7 @@
         <h4 class="font-medium text-indigo-600">Assessment (A)</h4>
         <textarea
           name="soap_assessment" rows="4"
-          class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+          class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
           placeholder="1. Acute bronchitis likely; 2. Rule out pneumonia"></textarea>
       </div>
 
@@ -238,14 +238,14 @@
             <label class="block text-sm font-medium text-gray-700">Diagnostic Plan</label>
             <input
               type="text" name="soap_plan_diag"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="Order BMP, refer to pulm consult" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Therapeutic Plan</label>
             <input
               type="text" name="soap_plan_tx"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="Start azithromycin 500 mg daily ×5 d" />
           </div>
         </div>
@@ -254,14 +254,14 @@
             <label class="block text-sm font-medium text-gray-700">Patient Education</label>
             <textarea
               name="soap_plan_edu" rows="2"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="Advise rest, hydration, avoid smoke exposure"></textarea>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Follow-Up</label>
             <input
               type="text" name="soap_plan_fu"
-              class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+              class="mt-1 w-full border border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
               placeholder="Follow up in 7 days or sooner if dyspnea worsens" />
           </div>
         </div>
@@ -342,17 +342,112 @@
     </fieldset>
 
     <!-- 7) Daily Progress -->
-    <fieldset id="fs-daily" class="space-y-4 border border-indigo-100 rounded-lg p-4 shadow-sm hidden">
-      <legend class="font-medium text-indigo-700">Daily Progress Notes</legend>
+    <fieldset id="fs-daily" class="space-y-6 border border-indigo-100 rounded-lg p-6 shadow-sm hidden">
+      <legend class="px-2 text-lg font-semibold text-indigo-700">🗓️ Daily Progress Notes</legend>
+
+      <!-- Header -->
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Date & Time</label>
+          <input type="datetime-local" name="daily_datetime"
+                 class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Provider Signature</label>
+          <input type="text" name="daily_provider"
+                 placeholder="Dr. Jane Smith, MD"
+                 class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2" />
+        </div>
+      </div>
+
+      <!-- Subjective -->
       <div>
-        <label class="block text-sm">Date</label>
-        <input type="date" name="daily_date"
-               class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100">
+        <h5 class="font-medium text-indigo-600">Subjective</h5>
+        <textarea name="daily_subjective" rows="2"
+                  placeholder="Patient reports …"
+                  class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"></textarea>
+      </div>
+
+      <!-- Objective -->
+      <div class="grid md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Temp (°C)</label>
+          <input type="number" step="0.1" name="daily_temp"
+                 class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">BP (mmHg)</label>
+          <input type="text" name="daily_bp"
+                 class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Pulse (bpm)</label>
+          <input type="number" name="daily_pulse"
+                 class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Resp (rpm)</label>
+          <input type="number" name="daily_resp"
+                 class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">SpO₂ (%)</label>
+          <input type="number" name="daily_spo2"
+                 class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Intake/Output (mL)</label>
+          <input type="text" name="daily_io"
+                 placeholder="I: 1200 / O: 1100"
+                 class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+        </div>
       </div>
       <div>
-        <label class="block text-sm">Notes</label>
-        <textarea name="daily_notes" rows="4"
-                  class="mt-1 w-full border border-indigo-200 rounded-md px-2 py-1 focus:ring-2 focus:ring-indigo-100"></textarea>
+        <label class="block text-sm font-medium text-gray-700">Physical Exam</label>
+        <textarea name="daily_exam" rows="2"
+                  class="mt-1 w-full border-indigo-200 rounded-md focus:ring-indigo-100 px-3 py-2"
+                  placeholder="Exam findings…"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Labs / Imaging</label>
+        <input type="text" name="daily_labs"
+               placeholder="e.g. WBC 7.0×10⁹/L; CXR clear"
+               class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+      </div>
+
+      <!-- Assessment -->
+      <div>
+        <h5 class="font-medium text-indigo-600">Assessment</h5>
+        <textarea name="daily_assessment" rows="3"
+                  class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100"
+                  placeholder="Problem list & daily status…"></textarea>
+      </div>
+
+      <!-- Plan -->
+      <div class="space-y-4">
+        <h5 class="font-medium text-indigo-600">Plan</h5>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Diagnostics</label>
+            <input type="text" name="daily_plan_diag"
+                   placeholder="e.g. repeat BMP in AM"
+                   class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Treatment & Support</label>
+            <input type="text" name="daily_plan_tx"
+                   placeholder="e.g. IV fluids, PT consult"
+                   class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+          </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Referrals / Discharge Readiness</label>
+            <input type="text" name="daily_plan_referral"
+                   placeholder="e.g. Social work for discharge planning"
+                   class="mt-1 w-full border-indigo-200 rounded-md px-3 py-2 focus:ring-indigo-100" />
+          </div>
+        </div>
       </div>
     </fieldset>
 
