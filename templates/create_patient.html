@@ -8,13 +8,13 @@
       <svg class="h-8 w-8 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m0 6v1m0 6v1m-6-6h1m6 0h1m-6 6h1m6 0h1m-6-6h1m6 0h1" />
       </svg>
-      <h2 class="text-2xl font-bold text-indigo-700">New Patient Registration</h2>
+      <h2 class="text-2xl font-bold text-indigo-700">New Patient Registration form</h2>
     </div>
     <p class="text-gray-600 text-sm bg-indigo-50 rounded-lg px-4 py-2 shadow mb-2">
       Please fill out the form below to register a new patient. All fields are required. Make sure the contact details are accurate for future communication and record keeping.
     </p>
   </div>
-  <form id="create_patient_form" method="POST" action="{{ url_for('create_patient') }}" class="space-y-4">
+  <form id="create_patient_form" method="POST" action="{{ url_for('auth.create_patient') }}" class="space-y-4">
     <div>
       <label for="name" class="block text-sm font-medium text-gray-700 flex items-center gap-1">
         Full Name
@@ -127,7 +127,7 @@ function showInfo(id) {
 document.getElementById('create_patient_form').addEventListener('submit', async function(e) {
   e.preventDefault();
   const formData = new FormData(this);
-  const response = await fetch("{{ url_for('create_patient') }}", {
+  const response = await fetch("{{ url_for('auth.create_patient') }}", {
     method: "POST",
     body: formData
   });

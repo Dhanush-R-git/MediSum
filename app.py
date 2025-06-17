@@ -339,6 +339,7 @@ def create_patient():
             'doctor_report': None,
             'scan_report': None,
             'blood_report': None,
+            'progress_report': None,
             'created_by': session['user_id']
         }
         db.patients.insert_one(new_patient)

@@ -30,7 +30,7 @@
         </svg>
         Add / Update Blood Data
       </h3>
-      <form id="upload_blood_form" method="POST" action="{{ url_for('upload_blood_report') }}" enctype="multipart/form-data" class="space-y-6">
+      <form id="upload_blood_form" method="POST" action="{{ url_for('lab.upload_blood') }}" enctype="multipart/form-data" class="space-y-6">
         <!-- Patient ID -->
         <div>
           <label for="patientId" class="block text-sm font-semibold text-red-700 mb-1">Patient ID</label>

@@ -47,6 +47,37 @@
           </button>
         </div>
         <p id="noImgMsg" class="text-gray-400 italic text-center mt-4">No images selected.</p>
+
+        <!-- Verification Section (hidden by default, shown when preview is expanded) -->
+        <div id="verificationSection" class="mt-4 p-4 border-2 border-red-200 rounded-lg bg-red-50 space-y-2 hidden">
+          <h4 class="text-lg font-medium text-red-700">Verification Required</h4>
+          <!-- Current User (read-only) -->
+          <div>
+            <label class="block text-sm font-semibold text-red-700">Current User</label>
+            <input type="text" id="currentUser" 
+                   value="{{ session['user_id'] }}" readonly
+                   class="mt-1 w-full border-red-300 rounded-lg px-3 py-2 bg-red-100 text-red-800" />
+          </div>
+          <!-- Verifier Name -->
+          <div>
+            <label for="verifierName" class="block text-sm font-semibold text-red-700">
+              Verifier Name
+            </label>
+            <input type="text" name="verifierName" id="verifierName" required
+                   placeholder="Type your username here"
+                   class="mt-1 w-full border-red-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-200" />
+          </div>
+          <!-- Passphrase -->
+          <div>
+            <label for="verificationCode" class="block text-sm font-semibold text-red-700">
+              Passphrase
+            </label>
+            <input type="text" name="verificationCode" id="verificationCode" required
+                   placeholder="Type 'verified'"
+                   class="mt-1 w-full border-red-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-200" />
+          </div>
+          <p id="verifyMsg" class="text-sm text-red-500 hidden">Verification failed all fields must match.</p>
+        </div>
       </div>
       <!-- end LEFT COLUMN -->
 
@@ -61,7 +92,7 @@
         <form
           id="upload_scan_form"
           method="POST"
-          action="{{ url_for('upload_scan_report') }}"
+          action="{{ url_for('radiology.upload_scan') }}"
           enctype="multipart/form-data"
           class="space-y-6"
         >
@@ -138,7 +169,7 @@
               Save Scan Data
             </button>
           </div>
-
+          
           <!-- Status Message -->
           <p id="upload_msg" class="text-sm mt-2 hidden"></p>
         </form>
@@ -160,6 +191,11 @@
 
 {% block scripts %}
 <script>
+  const currentUser = document.getElementById('currentUser').value.trim();
+  const verifier    = document.getElementById('verifierName');
+  const passphrase  = document.getElementById('verificationCode');
+  const submitBtn   = document.getElementById('submitBtn');
+
   const pdfInput = document.getElementById('reportFile');
   const imgInput = document.getElementById('imageFiles');
   const pdfPreviewContainer = document.getElementById('pdfPreviewContainer');
@@ -294,6 +330,43 @@
       modal.classList.add('hidden');
       modalBody.innerHTML = '';
     }
+  });
+    // Verify function
+  function checkVerification() {
+    const nameOK = verifier.value.trim() === currentUser;
+    const passOK = passphrase.value.trim().toLowerCase() === 'verified';
+    if (nameOK && passOK) {
+      verifyMsg.classList.add('hidden');
+      submitBtn.disabled = false;
+    } else {
+      verifyMsg.classList.remove('hidden');
+      // clear previews
+      pdfInput.value = '';
+      imgInput.value = '';
+      pdfPreviewContainer.classList.add('hidden');
+      noPdfMsg.classList.remove('hidden');
+      imgPreviewContainer.classList.add('hidden');
+      noImgMsg.classList.remove('hidden');
+      submitBtn.disabled = true;
+    }
+  }
+  verifier.addEventListener('input', checkVerification);
+  passphrase.addEventListener('input', checkVerification);
+
+  // Show verification section only when preview is expanded/visible
+  document.addEventListener('DOMContentLoaded', function() {
+    const preview = document.getElementById('pdfPreviewContainer');
+    const verification = document.getElementById('verificationSection');
+    const expandBtn = document.getElementById('expandPdf');
+    if (expandBtn && preview && verification) {
+      expandBtn.addEventListener('click', function() {
+        if (!preview.classList.contains('hidden')) {
+          verification.classList.remove('hidden');
+        }
+      });
+    }
+    // Optionally, hide verification if preview is collapsed
+    // Add your own logic if needed
   });
 </script>
 

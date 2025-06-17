@@ -14,7 +14,7 @@
     {% if error %}
       <p class="mb-4 text-red-600 text-sm text-center">{{ error }}</p>
     {% endif %}
-    <form method="POST" action="{{ url_for('register_page') }}" class="space-y-4">
+    <form method="POST" action="{{ url_for('auth.register_page') }}" class="space-y-4">
       <div>
         <label for="full_name" class="block text-sm font-medium text-gray-700">Full Name</label>
         <input type="text" name="full_name" id="full_name" required
@@ -51,7 +51,7 @@
         Register
       </button>
       <p class="mt-4 text-sm text-center text-gray-600">
-        Already have an account? <a href="{{ url_for('login_page') }}" class="text-indigo-500 hover:text-indigo-600">Login</a>
+        Already have an account? <a href="{{ url_for('auth.login_page') }}" class="text-indigo-500 hover:text-indigo-600">Login</a>
       </p>
     </form>
   </div>

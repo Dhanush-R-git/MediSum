@@ -29,7 +29,7 @@ def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if not session.get('logged_in'):
-            return redirect(url_for('login_page'))
+            return redirect(url_for('auth.login_page'))
         return f(*args, **kwargs)
     return wrapper
 
@@ -44,7 +44,7 @@ def role_required(*allowed_roles):
         @wraps(f)
         def wrapper(*args, **kwargs):
             if not session.get('logged_in'):
-                return redirect(url_for('login_page'))
+                return redirect(url_for('auth.login_page'))
             user_role = session.get('role')
             if user_role not in allowed_roles:
                 # 403 Forbidden
