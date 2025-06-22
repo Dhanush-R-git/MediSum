@@ -110,7 +110,7 @@ def create_patient():
             'address':    f['address'],
             'date_created': datetime.utcnow(),
             'doctor_docs':   {},
-            'scan_docs':     {},
+            'scan_docs':     [],
             'blood_docs':    {},
             'progress_docs': [],
             'created_by': session['user_id']

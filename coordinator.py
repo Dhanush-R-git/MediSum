@@ -1,4 +1,5 @@
 # coordinator.py
+
 import os
 from flask import Blueprint, request, render_template, session, jsonify, current_app
 from datetime import datetime
@@ -7,73 +8,103 @@ from utils.file_utils import validate_pdf, save_upload
 from pymongo import MongoClient
 from pdf_generator import create_pdf
 
-# Import builders directly
+# Import your form‐to‐text builders
 from progress_report import builders  
 
-bp = Blueprint('coordinator', __name__)
+bp = Blueprint('coordinator', __name__, url_prefix='/coord')
 db = MongoClient(os.getenv('MONGO_URI'))["reportdata"]
 
-@bp.route('/coord/upload_progress_report', methods=['GET','POST'])
-@role_required('coordinator')
+@bp.route('/upload_progress_report', methods=['GET','POST'])
+@role_required('coordinator', 'doctor')
 def upload_progress():
     if request.method == 'POST':
         pid      = request.form.get('patientId','').strip()
         rpt_type = request.form.get('reportType','').strip()
-        file_st  = request.files.get('reportFile')
+        attached = request.files.get('reportFile')
 
-        # Validate patient
-        patient = db.patients.find_one({'patient_id':pid})
+        # 1) Validate patient ID
+        if not pid:
+            return jsonify({'error': 'Patient ID is required'}), 400
+        patient = db.patients.find_one({'patient_id': pid})
         if not patient:
-            return jsonify({'error':'Patient not found'}),404
+            return jsonify({'error':'Patient not found'}), 404
 
-        # Build text
-        now = datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
-        header = f"Progress ({rpt_type})\nPatient: {pid}\nDate: {now}\n\n"
+        # 2) Build the note text
+        now_dt = datetime.utcnow()
+        header = (
+            f"Progress Note Type: {rpt_type}\n"
+            f"Patient ID: {pid}\n"
+            f"Date/Time: {now_dt.strftime('%Y-%m-%d %H:%M UTC')}\n\n"
+        )
         builder = builders.get(rpt_type)
         if not builder:
-            return jsonify({'error':'Unsupported type'}),400
+            return jsonify({'error':'Unsupported progress note type'}), 400
+
         body = builder(request.form)
-        full = header + body
+        full_text = header + body
 
-        # Push raw note for UI
-        db.patients.update_one(
-            {'patient_id':pid},
-            {'$push': {'progress_docs': {
-                'type': rpt_type,
-                'text': full,
-                'timestamp': datetime.utcnow()
-            }}}
-        )
+        # 3) If user attached a PDF, validate & save
+        rel_attach = None
+        if attached and attached.filename:
+            if not validate_pdf(attached):
+                return jsonify({'error':'Attached file must be a valid PDF'}), 400
+            rel_attach = save_upload(attached, 'progress_reports')
 
-        # Save optional attachment
-        rel = None
-        if file_st and file_st.filename:
-            if not validate_pdf(file_st):
-                return jsonify({'error':'Invalid PDF'}),400
-            rel = save_upload(file_st,'progress_reports')
+        # 4) Generate our own PDF copy of the full note
+        out_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'progress_reports')
+        os.makedirs(out_dir, exist_ok=True)
+        fname = f"{pid}_{rpt_type}_{int(now_dt.timestamp())}.pdf"
+        out_path = os.path.join(out_dir, fname)
+        create_pdf(full_text, out_path)
+        rel_pdf = os.path.join('static','uploads','progress_reports', fname)
 
-        # Generate PDF
-        fname = f"{pid}_{rpt_type}_{int(datetime.utcnow().timestamp())}.pdf"
-        outdir = os.path.join(current_app.root_path,'static','uploads','progress_reports')
-        os.makedirs(outdir,exist_ok=True)
-        outpath= os.path.join(outdir,fname)
-        create_pdf(full,outpath)
-        rel_pdf = os.path.join('static','uploads','progress_reports',fname)
-
-        # Log and save PDF ref
-        db.patients.update_one(
-            {'patient_id':pid},
-            {'$push': {'progress_docs.$[d].pdf': rel_pdf}},
-            array_filters=[{'d.type': rpt_type}]
-        )
-        entry = {
-            'patient_id':pid,'report_type':'progress',
-            'progress_type':rpt_type,'uploaded_by':session['user_id'],
-            'file_path':rel_pdf,'timestamp':datetime.utcnow()
+        # 5) Build the history entry
+        hist_entry = {
+            'type': rpt_type,
+            'timestamp': now_dt,
+            'text': full_text,
+            'pdf': rel_pdf
         }
-        if rel: entry['attachment'] = rel
-        db.reports_log.insert_one(entry)
+        if rel_attach:
+            hist_entry['attachment'] = rel_attach
 
-        return jsonify({'message':'Progress saved'}),200
+        # 6) Update patient document:
+        #    - push into history array
+        #    - update a quick‐access `latest` subdoc
+        pd = patient.get('progress_docs')
+        if isinstance(pd, list):
+            # old style → simple array push
+            db.patients.update_one(
+                {'patient_id': pid}, 
+                {   
+                    '$push': {'progress_docs': hist_entry}
+                }
+                )
+        else:
+            # nested style → push into history
+            db.patients.update_one(
+            {'patient_id': pid},
+            {
+                '$push': {'progress_docs.history': hist_entry},
+                '$set':  {'progress_docs.latest': hist_entry}
+            }
+            )
 
+        # 7) Log in reports_log
+        log_entry = {
+            'patient_id': pid,
+            'report_type': 'progress',
+            'progress_type': rpt_type,
+            'uploaded_by': session['user_id'],
+            'file_path': rel_pdf,
+            'timestamp': now_dt
+        }
+        if rel_attach:
+            log_entry['attachment'] = rel_attach
+
+        db.reports_log.insert_one(log_entry)
+
+        return jsonify({'message': 'Progress note saved successfully'}), 200
+
+    # GET
     return render_template('upload_progress_report.html')

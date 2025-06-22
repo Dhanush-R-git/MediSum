@@ -156,7 +156,7 @@ def generate_progress_report(pid, rpt_type, form, file_storage):
     Assume `db` is imported globally.
     """
     # Validate patient
-    from app import db  # avoid circular
+    from test.app import db  # avoid circular
     patient = db.patients.find_one({'patient_id': pid})
     if not patient:
         return {'error': 'Patient not found'}, 404

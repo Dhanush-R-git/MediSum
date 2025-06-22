@@ -13,8 +13,10 @@ db = MongoClient(os.getenv('MONGO_URI'))["reportdata"]
 @role_required('lab_tech')
 def upload_blood():
     """
-    Lab technicians or doctors can upload a blood report PDF,
+    Lab technicians can upload a blood report PDF, 
     enter notes, and input multiple test values.
+
+    Maintains blood_docs.history as an array of timestamped entries.
     """
     if request.method=='POST':
         # 1) Retrieve form fields
@@ -23,8 +25,11 @@ def upload_blood():
         notes = request.form.get('bloodNotes','').strip()
 
         # 2) Validate inputs
-        if not (pid and pdf):
-            return jsonify({'error':'Patient ID is Required'}),400
+        if not pid:
+            return jsonify({'error': 'Patient ID is required'}), 400
+        if not pdf or not pdf.filename:
+            return jsonify({'error': 'Blood report PDF is required'}), 400
+        
         patient = db.patients.find_one({'patient_id':pid})
 
         if not patient:
@@ -32,33 +37,50 @@ def upload_blood():
         if not validate_pdf(pdf):
             return jsonify({'error':'Invalid PDF'}),400
 
-        rel = save_upload(pdf,'blood_reports')
-        # collect results
+        # 1) Save PDF
+        rel_pdf = save_upload(pdf, 'blood_reports')
+
+        # 2) Parse numeric results
         results = {}
         for key, val in request.form.items():
             if key in ('patientId', 'bloodNotes'):
                 continue
-            # Attempt numeric parse; if fails, skip
             try:
                 num = float(val)
                 results[key] = num
             except (ValueError, TypeError):
-                continue
+                # skip non‐numeric fields
+                pass
 
+        # 3) Build a new history entry
+        entry = {
+            'timestamp': datetime.utcnow(),
+            'blood_report': rel_pdf,
+            'blood_notes': notes,
+            'blood_results': results
+        }
+
+        # 4) Update patient document:
+        #     - push to history
+        #     - set current top‐level fields
         db.patients.update_one(
-            {'patient_id':pid},
-            {'$set': {
-              'blood_docs.blood_report': rel,
-              'blood_docs.blood_notes': notes,
-              'blood_docs.blood_results': results
-            }}
+            {'patient_id': pid},
+            {
+                '$push': {'blood_docs.history': entry},
+                '$set': {
+                    'blood_docs.blood_report': rel_pdf,
+                    'blood_docs.blood_notes': notes,
+                    'blood_docs.blood_results': results
+                }
+            }
         )
+        # 5) Log the upload of the PDF
         db.reports_log.insert_one({
-            'patient_id':pid,
-            'report_type':'blood',
-            'uploaded_by':session['user_id'],
-            'file_path':rel,
-            'timestamp':datetime.utcnow()
+            'patient_id': pid,
+            'report_type': 'blood_pdf',
+            'uploaded_by': session['user_id'],
+            'file_path': rel_pdf,
+            'timestamp': entry['timestamp']
         })
-        return jsonify({'message':'Blood report and data saved successfully'})
+        return jsonify({'message':'Blood report and data saved successfully'}), 200
     return render_template('upload_blood_report.html', patient_data=None)

@@ -4,6 +4,8 @@ from flask import Flask
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
+
+logging.getLogger("pymongo").setLevel(logging.WARNING)
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY','CHANGE_ME')

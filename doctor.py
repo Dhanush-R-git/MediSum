@@ -15,11 +15,16 @@ from pdf_generator import create_pdf
 # LangChain imports for summary generation
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_huggingface import HuggingFaceEndpoint
-from langchain import PromptTemplate, LLMChain
+#from langchain import PromptTemplate, LLMChain
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+#from langchain.embeddings import HuggingFaceEmbeddings
+#from langchain.vectorstores import Chroma
+
+from langchain_core.prompts import PromptTemplate
+from langchain.chains.llm import LLMChain
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 
 bp = Blueprint('doctor', __name__, url_prefix='/doctor')
 
@@ -34,7 +39,7 @@ llm = HuggingFaceEndpoint(
     repo_id=repo_id,
     task="summarization",
     temperature=0.7,
-    token=os.getenv('HUGGINGFACEHUB_API_TOKEN')
+    model_kwargs={"token": os.getenv('HUGGINGFACEHUB_API_TOKEN')}
 )
 
 # Define the prompt template
@@ -67,7 +72,8 @@ prompt = PromptTemplate(
     template=prompt_template, 
     input_variables=["context"]
     )
-llm_chain = LLMChain(prompt=prompt, llm=llm)
+#llm_chain = LLMChain(prompt=prompt, llm=llm)
+llm_chain = prompt | llm
 
 
 @bp.route('/dashboard', methods=['GET'])
