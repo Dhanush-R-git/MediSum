@@ -207,7 +207,7 @@ def upload_doctor_report():
         if not validate_pdf(f):
             return jsonify({'error': 'Uploaded file must be a valid PDF under 10 MB'}), 400
 
-        rel = save_upload(f, 'doctor_reports')
+        rel = save_upload(f, pid, 'doctor_docs')
         # update sub‑doc
         db.patients.update_one(
             {'patient_id': pid},
@@ -233,32 +233,64 @@ def generate_summary():
     (doctor_report, scan_report, blood_report) into a single medical summary PDF
     using the LangChain pipeline, then store in summaries collection.
     """
-    pid = request.form.get('patientId')
+    data = request.get_json(force=True, silent=True) or {}
+    pid  = data.get('patientId')
     if not pid:
         return jsonify({'error': 'Patient ID required'}), 400
     patient = db.patients.find_one({'patient_id': pid})
-    if not patient:
-        return jsonify({'error': 'Patient not found'}), 404
+    #if not patient:
+        #return jsonify({'error': 'Patient not found'}), 404
 
     # Collect PDFs
     paths = []
-    for key in ('doctor_docs.doctor_report',
-                'scan_docs.scan_report',
-                'blood_docs.blood_report',
-                'progress_docs.progress_report'):
-        p = patient
-        for part in key.split('.'):
-            p = p.get(part) or {}
-        if isinstance(p, str) and os.path.isfile(os.path.join(current_app.root_path, p)):
-            paths.append(os.path.join(current_app.root_path, p))
+    root = current_app.root_path
+
+    # 1) doctor_docs.history
+    for entry in patient.get('doctor_docs', {}).get('history', []):
+        p = entry.get('doctor_report')
+        if p and os.path.isfile(os.path.join(root, p)):
+            paths.append(os.path.join(root, p))
+    # fallback single field
+    single = patient.get('doctor_docs', {}).get('doctor_report')
+    if single and os.path.isfile(os.path.join(root, single)):
+        paths.append(os.path.join(root, single))
+
+    # 2) scan_docs.history
+    for entry in patient.get('scan_docs', {}).get('history', []):
+        p = entry.get('scan_report')
+        if p and os.path.isfile(os.path.join(root, p)):
+            paths.append(os.path.join(root, p))
+    single = patient.get('scan_docs', {}).get('scan_report')
+    if single and os.path.isfile(os.path.join(root, single)):
+        paths.append(os.path.join(root, single))
+
+    # 3) blood_docs.history
+    for entry in patient.get('blood_docs', {}).get('history', []):
+        p = entry.get('blood_report')
+        if p and os.path.isfile(os.path.join(root, p)):
+            paths.append(os.path.join(root, p))
+    single = patient.get('blood_docs', {}).get('blood_report')
+    if single and os.path.isfile(os.path.join(root, single)):
+        paths.append(os.path.join(root, single))
+
+    # 4) progress_docs (list of progress note entries)
+    for entry in patient.get('progress_docs', []):
+        # your builder saves its PDF under entry['pdf']
+        p = entry.get('pdf')
+        if p and os.path.isfile(os.path.join(root, p)):
+            paths.append(os.path.join(root, p))
 
     if not paths:
         return jsonify({'error': 'No reports found to summarize'}), 404
 
     docs = []
-    for path in paths:
-        loader = PyPDFLoader(path)
-        docs.extend(loader.load_and_split())
+    try:
+        for p in paths:
+            loader = PyPDFLoader(p)
+            docs.extend(loader.load_and_split())
+    except Exception as e:
+        logging.exception("Failed to load PDF documents:")
+        return jsonify({'error': 'Error loading PDF files'}), 500
     try:
         embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
@@ -267,10 +299,10 @@ def generate_summary():
         vectordb = Chroma.from_documents(
             documents=chunks, 
             embedding=embeddings, 
-            persist_directory="./chroma_db"
+            persist_directory=os.path.join(current_app.root_path, "chroma_db", pid)
             )
         vectordb.persist()
-        logging.debug("Vector database created and persisted successfully.")
+        logging.debug("Vector database created and persisted successfully at chroma_db/%s", pid)
 
         qa_chain = RetrievalQA.from_chain_type(
             llm=llm_chain,
@@ -282,24 +314,25 @@ def generate_summary():
         response = qa_chain("Create a full medical summary that covers the patient's history, diagnosis, treatment, and current status")
         summary_text = response["result"]
     except Exception as e:
-        logging.error(f"Error generating summary: {e}")
+        logging.exception(f"Error during LangChain processing: {e}")
         return jsonify({'error': 'Error generating summary.'}), 500
 
     # Create PDF
-    fname = f"summary_{pid}_{int(datetime.utcnow().timestamp())}.pdf"
-    out_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'summaries')
+    now_ts = int(datetime.utcnow().timestamp())
+    out_dir = os.path.join(current_app.root_path, 'static', 'uploads', pid, 'summaries')
     os.makedirs(out_dir, exist_ok=True)
+    fname   = f"summary_{pid}_{now_ts}.pdf"
     out_path = os.path.join(out_dir, fname)
     try:
         create_pdf(summary_text, out_path)
     except Exception as e:
-        logging.error(f"Error creating PDF: {e}")
+        logging.error(f"Failed to write summary PDF: {e}")
         return jsonify({'error': 'Error creating summary PDF.'}), 500
 
     db.summaries.insert_one({
         'patient_id': pid,
         'summary_text': summary_text,
-        'pdf_path': os.path.join('static', 'uploads', 'summaries', fname),
+        'pdf_path': os.path.join('static', 'uploads', pid, 'summaries', fname),
         'generated_by': session['user_id'],
         'timestamp': datetime.utcnow()
     })

@@ -48,15 +48,18 @@ def upload_progress():
         if attached and attached.filename:
             if not validate_pdf(attached):
                 return jsonify({'error':'Attached file must be a valid PDF'}), 400
-            rel_attach = save_upload(attached, 'progress_reports')
+            rel_attach = save_upload(attached, pid, 'progress_docs')
 
         # 4) Generate our own PDF copy of the full note
-        out_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'progress_reports')
-        os.makedirs(out_dir, exist_ok=True)
-        fname = f"{pid}_{rpt_type}_{int(now_dt.timestamp())}.pdf"
-        out_path = os.path.join(out_dir, fname)
-        create_pdf(full_text, out_path)
-        rel_pdf = os.path.join('static','uploads','progress_reports', fname)
+        #    into static/uploads/<pid>/progress_docs/
+        now_ts = int(now_dt.timestamp())
+        filename = f"{pid}_{rpt_type}_{now_ts}.pdf"
+        save_dir = os.path.join(current_app.root_path, 'static', 'uploads', pid, 'progress_docs')
+        os.makedirs(save_dir, exist_ok=True)
+        full_path = os.path.join(save_dir, filename)
+        create_pdf(full_text, full_path)
+        # relative path to store in DB
+        rel_pdf = os.path.join('static', 'uploads', pid, 'progress_docs', filename)
 
         # 5) Build the history entry
         hist_entry = {

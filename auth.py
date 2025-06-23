@@ -95,25 +95,58 @@ def register_page():
 @bp.route('/create_patient', methods=['GET','POST'])
 @role_required('doctor')
 def create_patient():
-    if request.method=='POST':
+    if request.method == 'POST':
         f = request.form
-        # Validate...
+        # Validation
+        errors = []
+        name = f.get('name', '').strip()
+        dob = f.get('dob', '').strip()
+        sex = f.get('sex', '').strip()
+        email = f.get('email', '').strip()
+        phone = f.get('phone', '').strip()
+        address = f.get('address', '').strip()
+
+        if not name:
+            errors.append("Name is required.")
+        if not dob:
+            errors.append("Date of birth is required.")
+        else:
+            try:
+                dob_dt = datetime.strptime(dob, '%Y-%m-%d')
+            except ValueError:
+                errors.append("Date of birth must be in YYYY-MM-DD format.")
+        if not email or '@' not in email:
+            errors.append("Valid email is required.")
+        if not phone or not phone.isdigit() or len(phone) < 8:
+            errors.append("Valid phone number is required.")
+        if not address:
+            errors.append("Address is required.")
+
+        # Check for duplicate email or phone
+        if db.patients.find_one({'email': email}):
+            errors.append("A patient with this email already exists.")
+        if db.patients.find_one({'phone': phone}):
+            errors.append("A patient with this phone number already exists.")
+
+        if errors:
+            return render_template('create_patient.html', errors=errors, form=f)
+
         count = db.patients.count_documents({}) + 1
         pid = f"PAT{count:04d}"
         db.patients.insert_one({
             'patient_id': pid,
-            'name':       f['name'],
-            'dob':        datetime.strptime(f['dob'],'%Y-%m-%d'),
-            'sex':        f['sex'],
-            'email':      f['email'],
-            'phone':      f['phone'],
-            'address':    f['address'],
+            'name': name,
+            'dob': dob_dt,
+            'sex': sex,
+            'email': email,
+            'phone': phone,
+            'address': address,
             'date_created': datetime.utcnow(),
             'doctor_docs':   {},
-            'scan_docs':     [],
+            'scan_docs':     {},
             'blood_docs':    {},
             'progress_docs': [],
             'created_by': session['user_id']
         })
-        return jsonify({'message':'Patient created sucessfully','patient_id':pid})
+        return jsonify({'message': 'Patient created successfully', 'patient_id': pid})
     return render_template('create_patient.html')

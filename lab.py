@@ -38,7 +38,7 @@ def upload_blood():
             return jsonify({'error':'Invalid PDF'}),400
 
         # 1) Save PDF
-        rel_pdf = save_upload(pdf, 'blood_reports')
+        rel_pdf = save_upload(pdf, pid, 'blood_docs')
 
         # 2) Parse numeric results
         results = {}

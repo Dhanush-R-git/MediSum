@@ -36,16 +36,28 @@ def validate_pdf(file_storage) -> bool:
 
     return True
 
-def save_upload(file_storage, subfolder: str) -> str:
+def save_upload(file_storage, patient_id: str, doc_type: str) -> str:
     """
-    Saves the file under static/uploads/<subfolder>/secure_filename.
-    Returns the relative path (e.g. "static/uploads/doctor_reports/abc.pdf").
+    Saves the uploaded file under:
+        static/uploads/<patient_id>/<doc_type>/<secure_filename>
+    Returns the relative path, e.g.
+        "static/uploads/PAT0001/doctor_docs/myreport.pdf"
     """
+    # sanitize the filename
     filename = secure_filename(file_storage.filename)
-    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', subfolder)
+
+    # build the directory: static/uploads/<patient_id>/<doc_type>
+    upload_dir = os.path.join(
+        current_app.root_path,
+        'static', 'uploads',
+        patient_id,
+        doc_type
+    )
     os.makedirs(upload_dir, exist_ok=True)
+
+    # save the file
     file_path = os.path.join(upload_dir, filename)
     file_storage.save(file_path)
-    # Return the relative path (we will store this in DB for retrieval)
-    rel_path = os.path.join('static', 'uploads', subfolder, filename)
-    return rel_path
+
+    # return the relative path for storing in the DB
+    return os.path.join('static', 'uploads', patient_id, doc_type, filename)
