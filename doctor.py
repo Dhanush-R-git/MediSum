@@ -151,6 +151,9 @@ def load_patient(patient_id):
          'progress_type': entry.get('progress_type')}
         for entry in progress_logs
     ]
+    #doctor_history = patient.get('doctor_docs', {}).get('history', [])
+    scan_history   = patient.get('scan_docs',   {}).get('history', [])
+    blood_history  = patient.get('blood_docs',  {}).get('history', [])
 
     daily_logs = list(db.reports_log.find(
         {'patient_id': patient_id, 'progress_type': 'daily'}
@@ -185,7 +188,10 @@ def load_patient(patient_id):
         quality_measures=quality_measures,
         experts=experts,
         progress_history=progress_history,
-        daily_history=daily_history
+        daily_history=daily_history,
+        #doctor_history=doctor_history,
+        scan_history=scan_history,
+        blood_history=blood_history,
     )
 
 @bp.route('/upload_doctor_report', methods=['GET', 'POST'])
@@ -233,19 +239,23 @@ def generate_summary():
     (doctor_report, scan_report, blood_report) into a single medical summary PDF
     using the LangChain pipeline, then store in summaries collection.
     """
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(force=True)
     pid  = data.get('patientId')
+    paths = data.get('paths', [])
     if not pid:
         return jsonify({'error': 'Patient ID required'}), 400
-    patient = db.patients.find_one({'patient_id': pid})
+
+    #patient = db.patients.find_one({'patient_id': pid})
     #if not patient:
         #return jsonify({'error': 'Patient not found'}), 404
 
     # Collect PDFs
-    paths = []
-    root = current_app.root_path
+    #paths = []
+    #root = current_app.root_path
+
 
     # 1) doctor_docs.history
+    '''
     for entry in patient.get('doctor_docs', {}).get('history', []):
         p = entry.get('doctor_report')
         if p and os.path.isfile(os.path.join(root, p)):
@@ -279,6 +289,7 @@ def generate_summary():
         p = entry.get('pdf')
         if p and os.path.isfile(os.path.join(root, p)):
             paths.append(os.path.join(root, p))
+    '''
 
     if not paths:
         return jsonify({'error': 'No reports found to summarize'}), 404
@@ -286,8 +297,10 @@ def generate_summary():
     docs = []
     try:
         for p in paths:
-            loader = PyPDFLoader(p)
-            docs.extend(loader.load_and_split())
+            full = os.path.join(current_app.root_path, p)
+            if os.path.isfile(full):
+                loader = PyPDFLoader(full)
+                docs.extend(loader.load_and_split())
     except Exception as e:
         logging.exception("Failed to load PDF documents:")
         return jsonify({'error': 'Error loading PDF files'}), 500

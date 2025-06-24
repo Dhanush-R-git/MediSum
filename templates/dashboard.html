@@ -114,14 +114,116 @@
       </div>
 
       <!-- Generate Summary & Expert Email -->
-      <div class="flex justify-end mt-6 space-x-4">
-        <button id="generate_summary_btn" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600">
-          Generate Summary
-        </button>
+      <!-- Patient Reports Insights -->
+      <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Patient Reports Insights
+          </h3>
+          <div class="flex items-center space-x-4">
+            <label class="flex items-center text-sm">
+              <input type="checkbox" id="select_all_reports" class="h-4 w-4 text-indigo-600 rounded"/>  
+              <span class="ml-2">Select All</span>
+            </label>
+            <button id="generate_summary_btn" class="px-3 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition flex items-center gap-1">
+              <svg class="h-4 w-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3"/>
+              </svg>
+              Generate Summary
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-sm text-gray-700">
+          <!--{# Build a combined list of all report entries #}
+          {% set docs = [] %}
+          {# 1) Doctor history #}
+          {% for entry in doctor_history %}
+            {% if entry.doctor_report %}
+              {% set docs = docs + [{
+                  'type':  'doctor',
+                  'label': 'Doctor Report (' ~ entry.timestamp ~ ')',
+                  'path':  entry.doctor_report
+              }] %}
+            {% endif %}
+          {% endfor %}-->
+          { 2) Scan history #}
+          {% for entry in scan_history %}
+            {% if entry.scan_report %}
+              {% set docs = docs + [{
+                  'type':  'scan',
+                  'label': 'Scan Report (' ~ entry.timestamp ~ ')',
+                  'path':  entry.scan_report
+              }] %}
+            {% endif %}
+          {% endfor %}
+          {# 3) Blood history #}
+          {% for entry in blood_history %}
+            {% if entry.blood_report %}
+              {% set docs = docs + [{
+                  'type':  'blood',
+                  'label': 'Blood Report (' ~ entry.timestamp ~ ')',
+                  'path':  entry.blood_report
+              }] %}
+            {% endif %}
+          {% endfor %}
+          {# 4) Progress history #}
+          {% for entry in progress_history %}
+            {% if entry.file_path %}
+              {% set docs = docs + [{
+                  'type':  'progress',
+                  'label': 'Progress Note (' ~ entry.timestamp ~ ')',
+                  'path':  entry.file_path
+              }] %}
+            {% endif %}
+          {% endfor %}
+
+          {# Now render each one with a checkbox + view link #}
+          {% for doc in docs %}
+            <div class="flex items-center justify-between bg-indigo-50 rounded-md px-4 py-2">
+              <label class="flex items-center">
+                <input 
+                  type="checkbox" 
+                  class="report-checkbox h-4 w-4 text-indigo-600 rounded" 
+                  data-path="{{ doc.path }}" 
+                />
+                <span class="ml-2">{{ doc.label }}</span>
+              </label>
+              <a 
+                href="{{ url_for('doctor.download_file', filename=doc.path) }}" 
+                target="_blank"
+                class="text-indigo-600 hover:underline text-sm"
+              >
+                View
+              </a>
+            </div>
+          {% endfor %}
+
+          {# “Select All” button #}
+          {% if docs %}
+            <button 
+              id="select_all_reports" 
+              class="mt-2 px-3 py-1 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200"
+            >
+              Select All
+            </button>
+          {% endif %}
+        </div>
+
+        <div id="summary_status" class="mt-4 text-sm text-gray-500"></div>
+
+        <pre id="summary_output" class="mt-6 bg-gray-50 p-4 rounded-md whitespace-pre-line text-gray-800 hidden"></pre>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-4 mt-6">
         <button id="send_expert_btn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
           Send to Expert
         </button>
       </div>
+
 
       <!-- Daily Progress Notes Section for Dashboard Overview Tab -->
       <div id="daily_progress_notes" class="bg-white rounded-xl shadow-md p-6 mt-6">
@@ -245,36 +347,47 @@
     tabButtons[0].click();
   }
 
-  // GENERATE SUMMARY BUTTON HANDLER (AJAX)
-  const genBtn = document.getElementById('generate_summary_btn');
-  if (genBtn) {
-    genBtn.addEventListener('click', async () => {
-      const pid = "{{ selected }}";
-      if (!pid) return;
+  // 1) “Select All” toggles every checkbox
+  document.getElementById('select_all_reports')?.addEventListener('change', function(e) {
+    document.querySelectorAll('.report-checkbox').forEach(cb => cb.checked = e.target.checked);
+  });
 
-      genBtn.setAttribute('disabled', 'true');
-      genBtn.innerText = 'Generating...';
+  // 2) Generate Summary: gather selected paths, POST JSON, display returned text
+  document.getElementById('generate_summary_btn')?.addEventListener('click', async () => {
+    const checked = Array.from(document.querySelectorAll('.report-checkbox:checked'));
+    if (!checked.length) {
+      alert('Please select at least one report to summarize.');
+      return;
+    }
+    const paths = checked.map(cb => cb.dataset.path);
+    const status = document.getElementById('summary_status');
+    const output = document.getElementById('summary_output');
 
-      try {
-        const resp = await fetch("{{ url_for('doctor.generate_summary') }}", {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patientId: pid })
-        });
-        const data = await resp.json();
-        if (resp.ok) {
-          alert("Summary generated. Scroll down to see report insights or download PDF from Summaries page.");
-        } else {
-          alert("Error: " + data.error);
-        }
-      } catch (err) {
-        alert("Error generating summary.");
-      } finally {
-        genBtn.removeAttribute('disabled');
-        genBtn.innerText = 'Generate Summary';
+    // feedback while waiting
+    status.textContent = 'Generating summary…';
+    output.classList.add('hidden');
+
+    try {
+      const resp = await fetch("{{ url_for('doctor.generate_summary') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId: "{{ selected }}", paths })
+      });
+      const data = await resp.json();
+
+      if (resp.ok) {
+        alert("Summary generated. Scroll down to see report insights or download PDF from Summaries page.");
+        status.textContent = '✅ Summary generated successfully.';
+        output.textContent = data.summary_text || 'No summary text returned.';
+        output.classList.remove('hidden');
+      } else {
+        status.textContent = '❌ Error: ' + (data.error || 'Unknown');
       }
-    });
-  }
+    } catch (err) {
+      console.error(err);
+      status.textContent = '❌ Error generating summary.';
+    }
+  });
 
   // SEND TO EXPERT MODAL
   const sendBtn = document.getElementById('send_expert_btn');
