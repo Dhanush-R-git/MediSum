@@ -9,7 +9,7 @@
     </div>
   {% else %}
     <!-- TABS HEADER -->
-    <div class="flex space-x-6 border‐b border‐gray-200 pb-3 mb-4 bg-transparent sticky top-0 z-10">
+    <div id="tabs_header" class="flex space-x-6 border‐b border‐gray-200 pb-3 mb-4 bg-transparent sticky top-0 z-10">
       <button class="tab-btn text-gray-700 px-3 py-1 border-b-2 border-indigo-500 font-medium bg-gray-100 rounded-md hover:bg-gray-200" data-tab="overview">Overview</button>
       <button class="tab-btn text-gray-500 hover:text-gray-700 px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200" data-tab="caremgmt">Care Management</button>
       <button class="tab-btn text-gray-500 hover:text-gray-700 px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200" data-tab="documents">Documents</button>
@@ -114,7 +114,7 @@
       </div>
 
       <!-- Generate Summary & Expert Email -->
-      <!-- Patient Reports Insights -->
+      <!-- Patient Reports Insights
       <div class="bg-white rounded-lg shadow p-6 mt-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
@@ -138,7 +138,7 @@
         </div>
 
         <div class="space-y-2 text-sm text-gray-700">
-          <!--{# Build a combined list of all report entries #}
+          {# Build a combined list of all report entries #}
           {% set docs = [] %}
           {# 1) Doctor history #}
           {% for entry in doctor_history %}
@@ -149,8 +149,8 @@
                   'path':  entry.doctor_report
               }] %}
             {% endif %}
-          {% endfor %}-->
-          { 2) Scan history #}
+          {% endfor %}
+          {# 2) Scan history #}
           {% for entry in scan_history %}
             {% if entry.scan_report %}
               {% set docs = docs + [{
@@ -179,10 +179,11 @@
                   'path':  entry.file_path
               }] %}
             {% endif %}
-          {% endfor %}
+          {% endfor %} 
 
           {# Now render each one with a checkbox + view link #}
-          {% for doc in docs %}
+          {% for doc in reports %}
+            {% if doc.path %}
             <div class="flex items-center justify-between bg-indigo-50 rounded-md px-4 py-2">
               <label class="flex items-center">
                 <input 
@@ -200,6 +201,7 @@
                 View
               </a>
             </div>
+            {% endif %}
           {% endfor %}
 
           {# “Select All” button #}
@@ -216,7 +218,67 @@
         <div id="summary_status" class="mt-4 text-sm text-gray-500"></div>
 
         <pre id="summary_output" class="mt-6 bg-gray-50 p-4 rounded-md whitespace-pre-line text-gray-800 hidden"></pre>
+      </div> -->
+      <!-- Patient Reports Insights -->
+      <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+            <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Patient Reports Insights
+          </h3>
+          <div class="flex items-center space-x-4">
+            <label class="px-3 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition flex items-center gap-1">
+              <input type="checkbox" id="select_all_reports" class="h-4 w-4 text-indigo-600 rounded"/>  
+              <span class="ml-2">Select All</span>
+            </label>
+            <button id="generate_summary_btn" class="px-3 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition flex items-center gap-1">
+              <svg class="h-4 w-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3"/>
+              </svg>
+              Generate Summary
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-sm text-gray-700">
+          {% for doc in reports %}
+            <div>
+              <div class="font-semibold mb-1">{{ doc.label }}</div>
+              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {% for path in doc.paths %}
+                <div class="flex items-center justify-between bg-indigo-100 rounded-md px-4 py-2">
+                  <label class="flex items-center">
+                    <input
+                      type="checkbox"
+                      class="report-checkbox h-4 w-4 text-indigo-600 rounded"
+                      data-path="{{ path }}"
+                      {% if not doc.is_history %}disabled{% endif %}
+                    />
+                    <span class="ml-2 break-all">{{ path|basename}}</span>
+                  </label>
+                  <button
+                    class="view-btn text-indigo-600 hover:underline text-sm"
+                    data-path="{{ path }}"
+                  >View</button>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="mt-4">
+          <span id="summary_status" class="ml-4 text-sm text-blue-700"></span>
+        </div>
+
+        <pre
+          id="summary_output"
+          class="mt-6 p-4 bg-gray-100 rounded-lg text-sm whitespace-pre-wrap hidden"
+        ></pre>
       </div>
+
 
       <div class="bg-white rounded-lg shadow p-4 mt-6">
         <button id="send_expert_btn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
@@ -324,6 +386,9 @@
   // TAB SWITCHING LOGIC
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabPanels = document.querySelectorAll('.tab-panel');
+  const tabsHeader = document.getElementById('tabs_header');
+
+  
 
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -341,15 +406,50 @@
       document.getElementById(target).classList.remove('hidden');
     });
   });
+  // Expand in‐page preview
+  const modal = document.createElement('div');
+  modal.id = 'previewModal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden';
+  modal.innerHTML = `
+    <div class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-auto p-4 relative">
+      <button id="closePreview" class="absolute top-2 right-2 text-xl">×</button>
+      <iframe id="previewFrame" class="w-full h-[80vh]" frameborder="0"></iframe>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('closePreview').onclick = () => {
+    modal.classList.add('hidden');
+    document.getElementById('previewFrame').src = '';
+    if (tabsHeader) tabsHeader.classList.remove('hidden'); // SHOW TABS
+  };
+  modal.onclick = e => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+      document.getElementById('previewFrame').src = '';
+      if (tabsHeader) tabsHeader.classList.remove('hidden'); // SHOW TABS
+    }
+  };
+
+  // View‐button handler
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const path = btn.dataset.path;
+      const frame = document.getElementById('previewFrame');
+      frame.src = '/' + path;            // ensure correct URL to static file
+      modal.classList.remove('hidden');
+      if (tabsHeader) tabsHeader.classList.add('hidden'); // HIDE TABS
+    });
+  });
 
   // Make “Overview” active by default
   if (tabButtons.length > 0) {
     tabButtons[0].click();
   }
 
-  // 1) “Select All” toggles every checkbox
-  document.getElementById('select_all_reports')?.addEventListener('change', function(e) {
-    document.querySelectorAll('.report-checkbox').forEach(cb => cb.checked = e.target.checked);
+  // Select‐all toggles only history checkboxes
+  document.getElementById('select_all_reports').addEventListener('change', e => {
+    document.querySelectorAll('.report-checkbox').forEach(cb => {
+      if (!cb.disabled) cb.checked = e.target.checked;
+    });
   });
 
   // 2) Generate Summary: gather selected paths, POST JSON, display returned text

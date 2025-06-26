@@ -9,6 +9,7 @@ logging.getLogger("pymongo").setLevel(logging.WARNING)
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY','CHANGE_ME')
+app.jinja_env.filters['basename'] = lambda value: os.path.basename(value)
 
 # Mail config (for sending to experts)
 app.config.update(

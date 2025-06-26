@@ -34,12 +34,12 @@ db = MongoClient(mongo_uri)["reportdata"]
 
 # Configure LLM for summaries
 os.environ['HUGGINGFACEHUB_API_TOKEN'] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
-repo_id = "mistralai/Mistral-7B-Instruct-v0.3"
+repo_id = "mistralai/Magistral-Small-2506"
 llm = HuggingFaceEndpoint(
     repo_id=repo_id,
     task="summarization",
     temperature=0.7,
-    model_kwargs={"token": os.getenv('HUGGINGFACEHUB_API_TOKEN')}
+    huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
 )
 
 # Define the prompt template
@@ -151,9 +151,47 @@ def load_patient(patient_id):
          'progress_type': entry.get('progress_type')}
         for entry in progress_logs
     ]
-    #doctor_history = patient.get('doctor_docs', {}).get('history', [])
-    scan_history   = patient.get('scan_docs',   {}).get('history', [])
-    blood_history  = patient.get('blood_docs',  {}).get('history', [])
+    
+    # Collect history entries for doctor, scan, and blood reports
+    # 3. Collect all reports (doctor, scan, blood) and progress notes
+    reports = []
+    for kind, label, sub in [
+        ('doctor',   'Doctor Report',   'doctor_docs'),
+        ('scan',     'Scan Report',     'scan_docs'),
+        ('blood',    'Blood Report',    'blood_docs'),
+    ]:
+        doc_obj = patient.get(sub, {})
+        # 1) collect history entries
+        history = doc_obj.get('history', [])
+        paths = [e.get(f"{kind}_report") for e in history if e.get(f"{kind}_report")]
+        # 2) only include latest if you *also* want a “latest” separate (but see below)
+        latest = doc_obj.get(f"{kind}_report")
+        # push a single report descriptor
+        if paths:
+            reports.append({
+                'type':      kind,
+                'label':     f"{label} (history)",
+                'paths':     paths,
+                'is_history': True,
+            })
+        if latest:
+            reports.append({
+                'type':      kind,
+                'label':     f"{label} (latest)",
+                'paths':     [latest],
+                'is_history': False,
+            })
+
+    # progress notes
+    for entry in patient.get('progress_docs', []):
+        p = entry.get('pdf')
+        if not p: continue
+        reports.append({
+            'type':      'progress',
+            'label':     f"Progress Note ({entry.get('type')})",
+            'paths':     [p],
+            'is_history': True,     # treat progress as “latest only”
+        })
 
     daily_logs = list(db.reports_log.find(
         {'patient_id': patient_id, 'progress_type': 'daily'}
@@ -190,8 +228,9 @@ def load_patient(patient_id):
         progress_history=progress_history,
         daily_history=daily_history,
         #doctor_history=doctor_history,
-        scan_history=scan_history,
-        blood_history=blood_history,
+        #scan_history=scan_history,
+        #blood_history=blood_history,
+        reports=reports,
     )
 
 @bp.route('/upload_doctor_report', methods=['GET', 'POST'])
@@ -239,65 +278,21 @@ def generate_summary():
     (doctor_report, scan_report, blood_report) into a single medical summary PDF
     using the LangChain pipeline, then store in summaries collection.
     """
-    data = request.get_json(force=True)
-    pid  = data.get('patientId')
-    paths = data.get('paths', [])
+    payload = request.get_json(force=True) or {}
+    pid     = payload.get('patientId')
+    paths   = payload.get('paths', [])
     if not pid:
         return jsonify({'error': 'Patient ID required'}), 400
-
-    #patient = db.patients.find_one({'patient_id': pid})
-    #if not patient:
-        #return jsonify({'error': 'Patient not found'}), 404
-
-    # Collect PDFs
-    #paths = []
-    #root = current_app.root_path
-
-
-    # 1) doctor_docs.history
-    '''
-    for entry in patient.get('doctor_docs', {}).get('history', []):
-        p = entry.get('doctor_report')
-        if p and os.path.isfile(os.path.join(root, p)):
-            paths.append(os.path.join(root, p))
-    # fallback single field
-    single = patient.get('doctor_docs', {}).get('doctor_report')
-    if single and os.path.isfile(os.path.join(root, single)):
-        paths.append(os.path.join(root, single))
-
-    # 2) scan_docs.history
-    for entry in patient.get('scan_docs', {}).get('history', []):
-        p = entry.get('scan_report')
-        if p and os.path.isfile(os.path.join(root, p)):
-            paths.append(os.path.join(root, p))
-    single = patient.get('scan_docs', {}).get('scan_report')
-    if single and os.path.isfile(os.path.join(root, single)):
-        paths.append(os.path.join(root, single))
-
-    # 3) blood_docs.history
-    for entry in patient.get('blood_docs', {}).get('history', []):
-        p = entry.get('blood_report')
-        if p and os.path.isfile(os.path.join(root, p)):
-            paths.append(os.path.join(root, p))
-    single = patient.get('blood_docs', {}).get('blood_report')
-    if single and os.path.isfile(os.path.join(root, single)):
-        paths.append(os.path.join(root, single))
-
-    # 4) progress_docs (list of progress note entries)
-    for entry in patient.get('progress_docs', []):
-        # your builder saves its PDF under entry['pdf']
-        p = entry.get('pdf')
-        if p and os.path.isfile(os.path.join(root, p)):
-            paths.append(os.path.join(root, p))
-    '''
+    
+    logging.info(f"Generating summary for patient {pid}. PDF paths used: {paths}")
 
     if not paths:
         return jsonify({'error': 'No reports found to summarize'}), 404
 
     docs = []
     try:
-        for p in paths:
-            full = os.path.join(current_app.root_path, p)
+        for rel in paths:
+            full = os.path.join(current_app.root_path, rel)
             if os.path.isfile(full):
                 loader = PyPDFLoader(full)
                 docs.extend(loader.load_and_split())
@@ -314,18 +309,23 @@ def generate_summary():
             embedding=embeddings, 
             persist_directory=os.path.join(current_app.root_path, "chroma_db", pid)
             )
-        vectordb.persist()
+        #vectordb.persist()
         logging.debug("Vector database created and persisted successfully at chroma_db/%s", pid)
 
         qa_chain = RetrievalQA.from_chain_type(
             llm=llm_chain,
             retriever=vectordb.as_retriever(),
             chain_type="stuff",
-            chain_type_kwargs={"prompt": prompt},
+            #chain_type_kwargs={"prompt": prompt},
             return_source_documents=True
         )
-        response = qa_chain("Create a full medical summary that covers the patient's history, diagnosis, treatment, and current status")
+        response = qa_chain.invoke({
+            "query": "Create a full medical summary that covers the patient's history, diagnosis, treatment, and current status"
+            })
+        #result = qa_chain.invoke({"query": response})
         summary_text = response["result"]
+        logging.info("Summary generated")
+
     except Exception as e:
         logging.exception(f"Error during LangChain processing: {e}")
         return jsonify({'error': 'Error generating summary.'}), 500
