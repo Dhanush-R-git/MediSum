@@ -220,7 +220,7 @@
         <pre id="summary_output" class="mt-6 bg-gray-50 p-4 rounded-md whitespace-pre-line text-gray-800 hidden"></pre>
       </div> -->
       <!-- Patient Reports Insights -->
-      <div class="bg-white rounded-lg shadow p-6 mt-6">
+      <div id="report_insights" data-patient-id="{{ selected }}" class="bg-white rounded-lg shadow p-6 mt-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
             <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -388,6 +388,10 @@
   const tabPanels = document.querySelectorAll('.tab-panel');
   const tabsHeader = document.getElementById('tabs_header');
 
+  const container = document.getElementById('report_insights');
+  const PID = container.dataset.patientId;  // this pulls '{{ selected }}'
+
+
   
 
   tabButtons.forEach(btn => {
@@ -471,7 +475,7 @@
       const resp = await fetch("{{ url_for('doctor.generate_summary') }}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patientId: "{{ selected }}", paths })
+        body: JSON.stringify({ patientId: PID, paths })
       });
       const data = await resp.json();
 

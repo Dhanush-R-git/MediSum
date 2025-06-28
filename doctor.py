@@ -7,6 +7,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, session, jsonify, send_file, abort, current_app
 from email.message import EmailMessage
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
 from utils.security import role_required, login_required
 from utils.file_utils import validate_pdf, save_upload
@@ -28,18 +29,20 @@ from langchain_community.vectorstores import Chroma
 
 bp = Blueprint('doctor', __name__, url_prefix='/doctor')
 
+load_dotenv()
 # MongoDB setup
 mongo_uri = os.getenv('MONGO_URI')
 db = MongoClient(mongo_uri)["reportdata"]
 
 # Configure LLM for summaries
 os.environ['HUGGINGFACEHUB_API_TOKEN'] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
-repo_id = "mistralai/Magistral-Small-2506"
+repo_id = "mistralai/Mistral-7B-Instruct-v0.3"
 llm = HuggingFaceEndpoint(
     repo_id=repo_id,
-    task="summarization",
+    task="text-generation",
     temperature=0.7,
-    huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+    provider="hf-inference",
 )
 
 # Define the prompt template
@@ -350,7 +353,11 @@ def generate_summary():
         'timestamp': datetime.utcnow()
     })
 
-    return jsonify({'message': 'Summary generated successfully'})
+    return jsonify(
+        {
+            'message': 'Summary generated successfully',
+            'summary_text': summary_text
+        })
 
 
 @bp.route('/medical_summaries', methods=['GET', 'POST'])
